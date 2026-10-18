@@ -1,95 +1,131 @@
 import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
-  Heart, Share2, MapPin, Calendar, Package, Flag, MessageCircle,
-  ChevronLeft, ChevronRight, AlertCircle, ArrowRight, Tag, Check, X, Ban,
+  MapPin,
+  ShieldCheck,
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  ArrowRight,
+  MessageSquare,
+  Sparkles,
+  Calendar,
+  Share2,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
-import { supabase } from '@/lib/supabase';
+import { Avatar } from '@/components/ui/Avatar';
+import { Button } from '@/components/ui/Button';
+import { CategoryBadge } from '@/components/ui/Badge';
 import ProductCard from '@/components/ProductCard';
-import VerifiedBadge from '@/components/VerifiedBadge';
+import ContactSellerModal from '@/components/ContactSellerModal';
+import { useToast } from '@/components/ui/Toast';
 
 export default function ProductPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { products, favouriteProducts, toggleProductFavourite, startConversation, isAuthed, currentUser, offers, makeOffer, respondToOffer, blockUser } = useApp();
-  const product = id ? products.find(p => p.id === id) : undefined;
+  const { listings } = useApp();
+  const { toast } = useToast();
+
   const [activeImage, setActiveImage] = useState(0);
-  const [showReportModal, setShowReportModal] = useState(false);
-  const [showOfferModal, setShowOfferModal] = useState(false);
-  const [offerAmount, setOfferAmount] = useState('');
-  const [offerSubmitted, setOfferSubmitted] = useState(false);
-  const [showBlockModal, setShowBlockModal] = useState(false);
-  const [reportSubmitted, setReportSubmitted] = useState(false);
-  const [reportReason, setReportReason] = useState('');
-  const [reportDescription, setReportDescription] = useState('');
-  const productOffers = offers.filter(o => o.productId === product?.id);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
+
+  // Find product from listings or fallback to first product
+  const product = listings.find(l => l.id === id) || listings.find(l => l.type === 'product');
 
   if (!product) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-20 text-center">
-        <h2 className="text-2xl font-bold text-ink-800 mb-2">Product not found</h2>
-        <p className="text-ink-500 mb-4">This listing may have been removed or doesn't exist.</p>
-        <Link to="/explore" className="text-brand-600 font-semibold">← Back to Explore</Link>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-20 text-center space-y-4">
+        <h2 className="text-2xl font-bold text-slate-900">Product not found</h2>
+        <p className="text-sm text-slate-500">This listing may have been sold or removed.</p>
+        <Link to="/products">
+          <Button variant="primary" size="md">
+            Browse All Products
+          </Button>
+        </Link>
       </div>
     );
   }
 
-  const isFav = favouriteProducts.includes(product.id);
-  const similar = products.filter(p => p.id !== product.id && (p.category === product.category || p.sellerId === product.sellerId)).slice(0, 4);
-  const sellerProducts = products.filter(p => p.sellerId === product.sellerId && p.id !== product.id).slice(0, 4);
+  const seller = product.seller || {
+    name: 'Campus Student',
+    avatar: product.images[0],
+    department: 'Campus Member',
+    college: 'University Campus',
+    isVerified: true,
+    accountType: 'student',
+    showContact: true,
+  };
 
-  const handleMessageSeller = async () => {
-    if (!isAuthed) {
-      navigate('/signin');
-      return;
+  const similarProducts = listings
+    .filter(l => l.type === 'product' && l.id !== product.id && (l.category === product.category || l.sellerId === product.sellerId))
+    .slice(0, 3);
+
+  const handleShare = () => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success('Listing link copied to clipboard!');
     }
-    const convId = await startConversation(product.sellerId, product.id);
-    if (convId) navigate(`/messages?c=${convId}`);
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-12">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm text-ink-400 mb-5">
-        <Link to="/" className="hover:text-ink-600">Home</Link>
+      <nav className="flex items-center gap-2 text-xs text-slate-400 font-medium">
+        <Link to="/" className="hover:text-slate-700 transition-colors">Home</Link>
         <span>/</span>
-        <Link to="/explore" className="hover:text-ink-600">Explore</Link>
+        <Link to="/products" className="hover:text-slate-700 transition-colors">Products</Link>
         <span>/</span>
-        <Link to={`/explore?category=${encodeURIComponent(product.category)}`} className="hover:text-ink-600">{product.category}</Link>
+        <Link to={`/products?category=${encodeURIComponent(product.category)}`} className="hover:text-slate-700 transition-colors">
+          {product.category}
+        </Link>
         <span>/</span>
-        <span className="text-ink-600 truncate">{product.title}</span>
+        <span className="text-slate-700 truncate max-w-[200px]">{product.title}</span>
       </nav>
 
-      <div className="grid lg:grid-cols-2 gap-8">
-        {/* Image gallery */}
-        <div>
-          <div className="relative aspect-square bg-white rounded-3xl overflow-hidden shadow-soft border border-ink-100 mb-3">
-            <img src={product.images[activeImage]} alt={product.title} className="w-full h-full object-cover" />
+      {/* Main Product Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+        {/* Left: Image Gallery (4:3 ratio) */}
+        <div className="lg:col-span-7 space-y-3">
+          <div className="relative aspect-[4/3] w-full bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+            <img
+              src={product.images[activeImage] || 'https://images.pexels.com/photos/303383/pexels-photo-303383.jpeg?auto=compress&cs=tinysrgb&w=800'}
+              alt={product.title}
+              className="w-full h-full object-cover"
+            />
+
             {product.images.length > 1 && (
               <>
                 <button
+                  type="button"
                   onClick={() => setActiveImage((activeImage - 1 + product.images.length) % product.images.length)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-soft hover:scale-110 transition-transform"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 backdrop-blur-xs flex items-center justify-center text-slate-700 shadow-md hover:bg-white transition-colors"
+                  aria-label="Previous image"
                 >
-                  <ChevronLeft size={20} className="text-ink-700" />
+                  <ChevronLeft className="w-5 h-5" />
                 </button>
                 <button
+                  type="button"
                   onClick={() => setActiveImage((activeImage + 1) % product.images.length)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-soft hover:scale-110 transition-transform"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 backdrop-blur-xs flex items-center justify-center text-slate-700 shadow-md hover:bg-white transition-colors"
+                  aria-label="Next image"
                 >
-                  <ChevronRight size={20} className="text-ink-700" />
+                  <ChevronRight className="w-5 h-5" />
                 </button>
               </>
             )}
           </div>
+
+          {/* Thumbnails */}
           {product.images.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto no-scrollbar">
-              {product.images.map((img, i) => (
+            <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1">
+              {product.images.map((img, idx) => (
                 <button
-                  key={i}
-                  onClick={() => setActiveImage(i)}
-                  className={`w-20 h-20 rounded-xl overflow-hidden border-2 shrink-0 transition-colors ${activeImage === i ? 'border-brand-600' : 'border-ink-200'}`}
+                  key={idx}
+                  type="button"
+                  onClick={() => setActiveImage(idx)}
+                  className={`w-20 h-16 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${
+                    activeImage === idx ? 'border-[#0F766E] shadow-xs' : 'border-slate-200 opacity-70 hover:opacity-100'
+                  }`}
                 >
                   <img src={img} alt="" className="w-full h-full object-cover" />
                 </button>
@@ -98,315 +134,154 @@ export default function ProductPage() {
           )}
         </div>
 
-        {/* Product info */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-xs font-semibold text-brand-600 bg-brand-50 px-3 py-1 rounded-full">{product.category}</span>
-            <span className="text-xs font-semibold text-ink-500 bg-ink-100 px-3 py-1 rounded-full">{product.condition}</span>
-            {product.listingType === 'digital' && (
-              <span className="text-xs font-semibold text-violet-600 bg-violet-50 px-3 py-1 rounded-full">Digital</span>
-            )}
-            {product.listingType === 'service' && (
-              <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">Service</span>
-            )}
+        {/* Right: Product Details, Seller Mini-Card, CTAs */}
+        <div className="lg:col-span-5 space-y-6">
+          <div className="space-y-3">
+            {/* Category & Condition tags */}
+            <div className="flex items-center gap-2">
+              <CategoryBadge category={product.category} />
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                {product.condition || 'Like New'}
+              </span>
+              {product.ownerType === 'startup' && (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-50 text-[#0F766E] border border-teal-200">
+                  Student Startup
+                </span>
+              )}
+            </div>
+
+            {/* Title */}
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-snug">
+              {product.title}
+            </h1>
+
+            {/* Price */}
+            <div className="flex items-baseline gap-3">
+              <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                ${Number(product.basePrice).toFixed(0)}
+              </span>
+              <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                Available for pickup
+              </span>
+            </div>
+
+            {/* Location & Distance */}
+            <div className="flex items-center gap-2 text-xs text-slate-500 pt-1">
+              <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
+              <span>{product.location} • {product.distance || '0.2 mi'} from your campus center</span>
+            </div>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-bold text-ink-900 mb-3">{product.title}</h1>
-
-          <p className="text-3xl font-extrabold text-ink-900 mb-4">₹{product.price}</p>
-
-          <p className="text-ink-600 leading-relaxed mb-5">{product.description}</p>
-
-          {/* Quick details */}
-          <div className="grid grid-cols-2 gap-3 mb-5">
-            <div className="bg-ink-50 rounded-xl p-3">
-              <p className="text-xs text-ink-400 mb-1 flex items-center gap-1"><MapPin size={12} /> Location</p>
-              <p className="text-sm font-semibold text-ink-700">{product.location}</p>
-            </div>
-            <div className="bg-ink-50 rounded-xl p-3">
-              <p className="text-xs text-ink-400 mb-1 flex items-center gap-1"><Package size={12} /> Availability</p>
-              <p className="text-sm font-semibold text-ink-700">{product.quantity > 1 ? `${product.quantity} available` : product.quantity === 1 ? 'Last one!' : 'Made to order'}</p>
-            </div>
-            <div className="bg-ink-50 rounded-xl p-3">
-              <p className="text-xs text-ink-400 mb-1 flex items-center gap-1"><Calendar size={12} /> Posted</p>
-              <p className="text-sm font-semibold text-ink-700">{new Date(product.postedDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-            </div>
-          </div>
-
-          {/* Tags */}
-          {product.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-5">
-              {product.tags.map(tag => (
-                <span key={tag} className="px-2.5 py-1 bg-ink-100 text-ink-600 text-xs rounded-full">#{tag}</span>
-              ))}
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="flex gap-2 mb-4">
-            <button
-              onClick={() => toggleProductFavourite(product.id)}
-              className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold border transition-all ${isFav ? 'bg-error-50 border-error-200 text-error-600' : 'bg-white border-ink-200 text-ink-700 hover:border-error-300'}`}
-            >
-              <Heart size={20} fill={isFav ? 'currentColor' : 'none'} />
-              {isFav ? 'Saved' : 'Save'}
-            </button>
-            <button
-              onClick={handleMessageSeller}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-brand-600 text-white rounded-xl font-semibold hover:bg-brand-700 transition-colors"
-            >
-              <MessageCircle size={20} /> Message Seller
-            </button>
-            <button className="w-12 h-12 rounded-xl border border-ink-200 flex items-center justify-center text-ink-600 hover:bg-ink-50 transition-colors">
-              <Share2 size={18} />
-            </button>
-          </div>
-
-          <button
-            onClick={() => setShowReportModal(true)}
-            className="inline-flex items-center gap-1.5 text-sm text-ink-400 hover:text-error-500 transition-colors"
-          >
-            <Flag size={14} /> Report Listing
-          </button>
-
-          {/* Offer button */}
-          {isAuthed && currentUser?.id !== product.sellerId && (
-            <button
-              onClick={() => setShowOfferModal(true)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 mb-3 border border-accent-200 text-accent-700 rounded-xl text-sm font-semibold hover:bg-accent-50 transition-colors"
-            >
-              <Tag size={18} /> Make an Offer
-            </button>
-          )}
-
-          {/* Transaction status */}
-          {product.transactionStatus !== 'available' && (
-            <div className="mb-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold
-              ${product.transactionStatus === 'sold' ? 'bg-ink-100 text-ink-600' : product.transactionStatus === 'reserved' ? 'bg-amber-50 text-amber-700' : 'bg-ink-100 text-ink-600'}"
-            >
-              {product.transactionStatus === 'sold' ? 'Sold' : product.transactionStatus === 'reserved' ? 'Reserved' : 'Unavailable'}
-            </div>
-          )}
-
-          {/* Payment disclaimer */}
-          <div className="mt-5 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-            <AlertCircle size={20} className="text-amber-600 shrink-0 mt-0.5" />
-            <p className="text-sm text-amber-800 leading-relaxed">
-              Please note: AMPLOFY does not currently process payments or provide shipping or delivery services. Any payment, shipping, pickup, or exchange arrangement is made directly between the buyer and seller. AMPLOFY does not guarantee or manage these transactions. Please exercise caution and follow our safety guidelines.
+          {/* Description */}
+          <div className="pt-4 border-t border-slate-200">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+              Description
+            </h3>
+            <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+              {product.description}
             </p>
           </div>
-        </div>
-      </div>
 
-      {/* Seller info */}
-      <div className="mt-10 bg-white rounded-2xl shadow-soft border border-ink-100 p-5 sm:p-6">
-        <h2 className="font-bold text-ink-800 mb-4">Seller Information</h2>
-        <div className="flex flex-col sm:flex-row items-start gap-4">
-          <Link to={`/profile/${product.sellerId}`} className="flex items-center gap-4 group">
-            {product.sellerAvatar ? (
-              <img src={product.sellerAvatar} alt={product.sellerName} className="w-16 h-16 rounded-2xl object-cover" />
-            ) : (
-              <div className="w-16 h-16 rounded-2xl bg-brand-50 flex items-center justify-center">
-                <Package size={24} className="text-brand-400" />
-              </div>
-            )}
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-bold text-ink-800 group-hover:text-brand-700 transition-colors">{product.sellerName}</h3>
-                {product.sellerVerified && <VerifiedBadge size="md" />}
-              </div>
-              <p className="text-sm text-ink-400">{product.campus}</p>
+          {/* Seller Mini-Card */}
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Seller Information
+              </span>
+              <span className="text-xs text-slate-400">Campus Verified</span>
             </div>
-          </Link>
-          <div className="flex gap-2 sm:ml-auto">
+
+            <div className="flex items-center gap-3">
+              <Avatar
+                src={seller.avatar}
+                name={seller.name}
+                size="md"
+                verified={seller.isVerified}
+                isStartup={product.ownerType === 'startup'}
+              />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <h4 className="font-bold text-sm text-slate-900 truncate">
+                    {seller.name}
+                  </h4>
+                  {seller.isVerified && (
+                    <ShieldCheck className="w-4 h-4 text-[#0F766E] shrink-0" title="Verified Campus Member" />
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 truncate">
+                  {seller.department} • {seller.college}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions: "Contact seller" (NO heart / wishlist button per scope decision) */}
+          <div className="flex items-center gap-3 pt-2">
+            <Button
+              variant="primary"
+              size="lg"
+              className="flex-1"
+              leftIcon={<MessageSquare className="w-4 h-4" />}
+              onClick={() => setContactModalOpen(true)}
+            >
+              Contact seller
+            </Button>
             <button
-              onClick={handleMessageSeller}
-              className="px-4 py-2 bg-brand-600 text-white rounded-xl text-sm font-semibold hover:bg-brand-700 transition-colors"
+              type="button"
+              onClick={handleShare}
+              className="p-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors"
+              title="Share Listing"
             >
-              Message
+              <Share2 className="w-5 h-5" />
             </button>
+          </div>
+
+          {/* Safety Tips Box */}
+          <div className="p-4 rounded-xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 space-y-1.5">
+            <div className="flex items-center gap-2 font-bold text-amber-950">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>Campus Safety Tips</span>
+            </div>
+            <ul className="list-disc list-inside space-y-1 text-amber-800 leading-relaxed pl-1">
+              <li>Meet in public campus areas (student center, library, dining halls).</li>
+              <li>Inspect item condition thoroughly before completing payment.</li>
+              <li>Never pay outside the platform for delivery services.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Similar Products */}
+      {similarProducts.length > 0 && (
+        <section className="pt-8 border-t border-slate-200">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+              Similar Campus Listings
+            </h2>
             <Link
-              to={`/profile/${product.sellerId}`}
-              className="px-4 py-2 border border-ink-200 text-ink-700 rounded-xl text-sm font-semibold hover:bg-ink-50 transition-colors"
+              to={`/products?category=${encodeURIComponent(product.category)}`}
+              className="text-xs font-semibold text-[#0F766E] hover:underline inline-flex items-center gap-1"
             >
-              View Profile
+              <span>See more</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
-        </div>
-      </div>
 
-      {/* Reviews */}
-      <div className="mt-8">
-        <h2 className="font-bold text-xl text-ink-800 mb-4">Reviews</h2>
-        <div className="text-center py-12 bg-white rounded-2xl border border-ink-100">
-          <p className="text-ink-500">No reviews yet.</p>
-        </div>
-      </div>
-
-      {/* More from this seller */}
-      {sellerProducts.length > 0 && (
-        <div className="mt-10">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-xl text-ink-800">More from {product.sellerName}</h2>
-            <Link to={`/profile/${product.sellerId}`} className="text-sm font-semibold text-brand-600 hover:text-brand-700 inline-flex items-center gap-1">
-              View all <ArrowRight size={14} />
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-5">
-            {sellerProducts.map(p => <ProductCard key={p.id} product={p} />)}
-          </div>
-        </div>
-      )}
-
-      {/* Similar products */}
-      {similar.length > 0 && (
-        <div className="mt-10">
-          <h2 className="font-bold text-xl text-ink-800 mb-4">Similar Products</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-5">
-            {similar.map(p => <ProductCard key={p.id} product={p} />)}
-          </div>
-        </div>
-      )}
-
-      {/* Report modal */}
-      {showReportModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => { setShowReportModal(false); setReportSubmitted(false); }} />
-          <div className="relative bg-white rounded-2xl shadow-float max-w-md w-full p-6 animate-scale-in">
-            {reportSubmitted ? (
-              <div className="text-center py-4">
-                <div className="w-14 h-14 mx-auto bg-emerald-50 rounded-2xl flex items-center justify-center mb-3">
-                  <Check size={28} className="text-emerald-600" />
-                </div>
-                <h3 className="font-bold text-ink-800 mb-1">Thank you. Your report has been submitted for review.</h3>
-                <button onClick={() => { setShowReportModal(false); setReportSubmitted(false); }} className="mt-4 px-5 py-2 border border-ink-200 rounded-xl text-sm font-semibold text-ink-700">Close</button>
-              </div>
-            ) : (
-              <>
-                <h3 className="font-bold text-lg text-ink-800 mb-2">Report this listing</h3>
-                <p className="text-sm text-ink-500 mb-4">Help us keep the marketplace safe. Tell us why you're reporting this listing.</p>
-                <div className="space-y-2 mb-4">
-                  {['Illegal/prohibited item', 'Scam/fraud', 'Counterfeit item', 'Stolen item', 'Misleading listing', 'Inappropriate content', 'Spam', 'Other'].map(reason => (
-                    <label key={reason} className="flex items-center gap-2 p-2.5 rounded-xl hover:bg-ink-50 cursor-pointer">
-                      <input type="radio" name="reason" value={reason} checked={reportReason === reason} onChange={e => setReportReason(e.target.value)} className="accent-brand-600" />
-                      <span className="text-sm text-ink-700">{reason}</span>
-                    </label>
-                  ))}
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-semibold text-ink-700 mb-1.5">Additional details (optional)</label>
-                  <textarea value={reportDescription} onChange={e => setReportDescription(e.target.value)} placeholder="Provide more context..." rows={2} className="w-full bg-ink-50 rounded-xl px-4 py-2.5 text-sm outline-none border border-ink-200 focus:border-brand-300 resize-none" />
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={() => setShowReportModal(false)} className="flex-1 py-2.5 border border-ink-200 rounded-xl text-sm font-semibold text-ink-700">Cancel</button>
-                  <button
-                    onClick={async () => {
-                      if (!currentUser || !reportReason) return;
-                      const { error } = await supabase.from('reports').insert({
-                        reporter_id: currentUser.id,
-                        type: 'listing',
-                        target_id: product.id,
-                        target_name: product.title,
-                        reason: reportReason,
-                        description: reportDescription || null,
-                        status: 'report-received',
-                      });
-                      if (!error) setReportSubmitted(true);
-                    }}
-                    disabled={!reportReason || !currentUser}
-                    className="flex-1 py-2.5 bg-error-500 text-white rounded-xl text-sm font-semibold hover:bg-error-600 transition-colors disabled:opacity-50"
-                  >
-                    Submit Report
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Offer modal */}
-      {showOfferModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => { setShowOfferModal(false); setOfferSubmitted(false); }} />
-          <div className="relative bg-white rounded-2xl shadow-float max-w-md w-full p-6 animate-scale-in">
-            {offerSubmitted ? (
-              <div className="text-center py-4">
-                <div className="w-14 h-14 mx-auto bg-emerald-50 rounded-2xl flex items-center justify-center mb-3">
-                  <Check size={28} className="text-emerald-600" />
-                </div>
-                <h3 className="font-bold text-ink-800 mb-1">Offer submitted!</h3>
-                <p className="text-sm text-ink-500">The seller will be notified of your offer of ₹{offerAmount}.</p>
-                <p className="text-xs text-ink-400 mt-2">Payments and shipping are arranged directly between students. AMPLOFY does not process or guarantee transactions.</p>
-                <button onClick={() => { setShowOfferModal(false); setOfferSubmitted(false); setOfferAmount(''); }} className="mt-4 px-5 py-2 border border-ink-200 rounded-xl text-sm font-semibold text-ink-700">Close</button>
-              </div>
-            ) : (
-              <>
-                <h3 className="font-bold text-lg text-ink-800 mb-2">Make an Offer</h3>
-                <p className="text-sm text-ink-500 mb-4">Listing price: ₹{product.price}. Enter your offer below.</p>
-                <div className="mb-4">
-                  <label className="block text-sm font-semibold text-ink-700 mb-1.5">Your Offer (₹)</label>
-                  <input type="number" value={offerAmount} onChange={e => setOfferAmount(e.target.value)} placeholder={`e.g. ${Math.round(product.price * 0.8)}`} className="w-full bg-ink-50 rounded-xl px-4 py-2.5 text-sm outline-none border border-ink-200 focus:border-brand-300 focus:ring-2 focus:ring-brand-100" />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-semibold text-ink-700 mb-1.5">Message (optional)</label>
-                  <textarea placeholder="Add a note to the seller..." rows={2} className="w-full bg-ink-50 rounded-xl px-4 py-2.5 text-sm outline-none border border-ink-200 focus:border-brand-300 resize-none" />
-                </div>
-                <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-4">
-                  <p className="text-xs text-amber-700">If your offer is accepted, payment and exchange must be arranged directly with the seller. AMPLOFY does not process payments.</p>
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={() => setShowOfferModal(false)} className="flex-1 py-2.5 border border-ink-200 rounded-xl text-sm font-semibold text-ink-700">Cancel</button>
-                  <button
-                    onClick={async () => {
-                      if (offerAmount && currentUser && product) {
-                        await makeOffer({
-                          productId: product.id,
-                          buyerId: currentUser.id,
-                          buyerName: currentUser.name || 'You',
-                          buyerAvatar: currentUser.avatar,
-                          amount: Number(offerAmount),
-                        });
-                        setOfferSubmitted(true);
-                      }
-                    }}
-                    disabled={!offerAmount || Number(offerAmount) <= 0}
-                    className="flex-1 py-2.5 bg-accent-600 text-white rounded-xl text-sm font-semibold hover:bg-accent-700 disabled:opacity-50"
-                  >
-                    Submit Offer
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Offers on this product (for seller) */}
-      {productOffers.length > 0 && currentUser?.id === product.sellerId && (
-        <div className="mt-8">
-          <h2 className="font-bold text-xl text-ink-800 mb-4">Offers on this listing</h2>
-          <div className="space-y-3">
-            {productOffers.map(o => (
-              <div key={o.id} className="bg-white rounded-2xl shadow-soft border border-ink-100 p-4 flex items-center gap-4">
-                <div className="flex-1">
-                  <p className="font-semibold text-ink-800">₹{o.amount}</p>
-                  <p className="text-xs text-ink-400">From {o.buyerName} · {new Date(o.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</p>
-                </div>
-                {o.status === 'pending' ? (
-                  <div className="flex gap-2">
-                    <button onClick={() => respondToOffer(o.id, 'accepted')} className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-semibold hover:bg-emerald-100">Accept</button>
-                    <button onClick={() => respondToOffer(o.id, 'rejected')} className="px-3 py-1.5 bg-error-50 text-error-600 rounded-lg text-xs font-semibold hover:bg-error-100">Reject</button>
-                    <button onClick={() => respondToOffer(o.id, 'countered')} className="px-3 py-1.5 bg-ink-100 text-ink-600 rounded-lg text-xs font-semibold hover:bg-ink-200">Counter</button>
-                  </div>
-                ) : (
-                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-ink-100 text-ink-600">{o.status}</span>
-                )}
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {similarProducts.map(p => (
+              <ProductCard key={p.id} product={p} />
             ))}
           </div>
-        </div>
+        </section>
       )}
+
+      {/* Contact Seller Modal */}
+      <ContactSellerModal
+        isOpen={contactModalOpen}
+        onClose={() => setContactModalOpen(false)}
+        seller={seller}
+        listingTitle={product.title}
+      />
     </div>
   );
 }

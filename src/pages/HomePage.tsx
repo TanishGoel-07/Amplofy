@@ -1,363 +1,487 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
-  ArrowRight,
-  BadgeCheck,
-  Wallet,
-  Rocket,
-  Users,
-  Sparkles,
-  Shirt,
-  BookOpen,
-  Smartphone,
-  Palette,
-  Monitor,
-  Pencil,
-  Briefcase,
-  Recycle,
-  Package,
-  UserPlus,
-  ShieldCheck,
-  Store,
-  TrendingUp,
   Search,
-  type LucideIcon,
+  ArrowRight,
+  BookOpen,
+  Laptop,
+  Home as HomeIcon,
+  GraduationCap,
+  Palette,
+  Code,
+  Camera,
+  TrendingUp,
+  Truck,
+  Music,
+  CheckCircle2,
+  Sparkles,
+  ShieldCheck,
+  Plus,
+  Handshake,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import ProductCard from '@/components/ProductCard';
-
-const categoryIcons: Record<string, LucideIcon> = {
-  Handmade: Sparkles, Fashion: Shirt, Books: BookOpen, Electronics: Smartphone,
-  'Art & Crafts': Palette, 'Digital Products': Monitor, Stationery: Pencil,
-  Services: Briefcase, 'Pre-Owned': Recycle, Other: Package,
-};
-
-const categoryColors: Record<string, string> = {
-  Handmade: 'bg-brand-50 text-brand-600', Fashion: 'bg-accent-50 text-accent-600',
-  Books: 'bg-sky-50 text-sky-600', Electronics: 'bg-slate-100 text-slate-600',
-  'Art & Crafts': 'bg-rose-50 text-rose-600', 'Digital Products': 'bg-violet-50 text-violet-600',
-  Stationery: 'bg-amber-50 text-amber-600', Services: 'bg-emerald-50 text-emerald-600',
-  'Pre-Owned': 'bg-teal-50 text-teal-600', Other: 'bg-indigo-50 text-indigo-600',
-};
-
-const categories = [
-  { name: 'Handmade' }, { name: 'Fashion' },
-  { name: 'Books' }, { name: 'Electronics' },
-  { name: 'Art & Crafts' }, { name: 'Digital Products' },
-  { name: 'Stationery' }, { name: 'Services' },
-  { name: 'Pre-Owned' }, { name: 'Other' },
-];
-
-const features = [
-  { icon: BadgeCheck, title: 'Student Verified', desc: 'Discover products and creators from verified students.', color: 'bg-brand-500' },
-  { icon: Wallet, title: 'Affordable', desc: 'Find useful products at student-friendly prices.', color: 'bg-accent-500' },
-  { icon: Rocket, title: 'Build Your Brand', desc: 'Turn your hobby or skill into your first small business.', color: 'bg-rose-500' },
-  { icon: Users, title: 'Student Community', desc: 'Connect with other young creators, sellers and buyers.', color: 'bg-sky-500' },
-];
-
-const steps = [
-  { num: '1', icon: UserPlus, title: 'Join', desc: 'Create your free account in seconds.' },
-  { num: '2', icon: ShieldCheck, title: 'Verify', desc: 'Verify that you\'re a student.' },
-  { num: '3', icon: Store, title: 'Discover or List', desc: 'Browse products or list your own.' },
-  { num: '4', icon: TrendingUp, title: 'Connect', desc: 'Connect and buy/sell with students.' },
-];
+import ServiceListCard from '@/components/ServiceListCard';
+import StartupCard from '@/components/StartupCard';
+import { LookingForCard } from '@/components/LookingForCard';
+import { RespondLookingForModal } from '@/components/RespondLookingForModal';
+import type { StartupLookingFor } from '@/data/types';
+import { Button } from '@/components/ui/Button';
 
 export default function HomePage() {
-  const { products } = useApp();
-  const hasProducts = products.length > 0;
+  const navigate = useNavigate();
+  const { listings, services, startups, lookingForRequests } = useApp();
+
+  const [activeSearchTab, setActiveSearchTab] = useState<'products' | 'services' | 'startups'>('products');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [respondingRequest, setRespondingRequest] = useState<StartupLookingFor | null>(null);
+
+  const categories = [
+    { name: 'Textbooks', icon: BookOpen, type: 'products', param: 'Textbooks' },
+    { name: 'Electronics', icon: Laptop, type: 'products', param: 'Electronics' },
+    { name: 'Dorm', icon: HomeIcon, type: 'products', param: 'Dorm' },
+    { name: 'Tutoring', icon: GraduationCap, type: 'services', param: 'Tutoring' },
+    { name: 'Design', icon: Palette, type: 'services', param: 'Design' },
+    { name: 'Development', icon: Code, type: 'services', param: 'Development' },
+    { name: 'Photography', icon: Camera, type: 'services', param: 'Photography' },
+    { name: 'Marketing', icon: TrendingUp, type: 'services', param: 'Marketing' },
+    { name: 'Moving', icon: Truck, type: 'services', param: 'Labor' },
+    { name: 'Music', icon: Music, type: 'services', param: 'Music' },
+  ];
+
+  const popularChips = [
+    { label: 'Laptops', type: 'products', q: 'MacBook' },
+    { label: 'Textbooks', type: 'products', q: 'Calculus' },
+    { label: 'Tutoring', type: 'services', q: 'Tutoring' },
+    { label: 'Web Design', type: 'services', q: 'Design' },
+    { label: 'Roommates', type: 'products', q: 'Dorm' },
+  ];
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const query = searchQuery.trim();
+    if (activeSearchTab === 'services') {
+      navigate(`/services${query ? `?q=${encodeURIComponent(query)}` : ''}`);
+    } else if (activeSearchTab === 'startups') {
+      navigate(`/startups${query ? `?q=${encodeURIComponent(query)}` : ''}`);
+    } else {
+      navigate(`/products${query ? `?q=${encodeURIComponent(query)}` : ''}`);
+    }
+  };
+
+  // Filter products for the 2x2 grid (first 4 products)
+  const productItems = listings.filter(l => l.type === 'product').slice(0, 4);
+
+  // Filter trending services (first 4 services)
+  const trendingServices = (services.length > 0 ? services : listings.filter(l => l.type === 'service')).slice(0, 4);
+
+  // Featured startups (first 3)
+  const featuredStartups = startups.slice(0, 3);
 
   return (
-    <div>
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-brand-50 via-white to-brand-50/30">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 -right-20 w-96 h-96 bg-brand-200/30 rounded-full blur-3xl" />
-          <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-accent-200/20 rounded-full blur-3xl" />
-        </div>
+    <div className="space-y-16 lg:space-y-24 pb-16">
+      {/* 1. HERO SECTION */}
+      <section className="relative pt-12 md:pt-16 pb-12 overflow-hidden bg-gradient-to-b from-teal-50/50 via-slate-50/20 to-transparent">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-900 border border-amber-200 mb-6 shadow-2xs">
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            <span>The Campus Marketplace & Startup Hub</span>
+          </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 md:py-24">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="animate-slide-up">
-              <div className="inline-flex items-center gap-2 bg-brand-50 text-brand-700 px-3 py-1.5 rounded-full text-sm font-semibold mb-5 border border-brand-100">
-                <Sparkles size={16} /> The marketplace and community built for students
-              </div>
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.15] max-w-3xl mx-auto mb-4">
+            Buy, sell & hire talent on campus
+          </h1>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-ink-900 leading-[1.1] tracking-tight text-balance mb-3">
-                <span className="text-brand-600">Find.</span> <span className="text-accent-600">Create.</span> <span className="text-rose-500">Belong.</span>
-              </h1>
+          <p className="text-base sm:text-lg text-slate-500 max-w-2xl mx-auto mb-8 font-normal leading-relaxed">
+            The safest place for students and student startups to trade goods and offer services.
+          </p>
 
-              <p className="text-lg text-ink-600 leading-relaxed mb-8 max-w-lg text-balance">
-                The student marketplace and community. Discover products, services, and creators from fellow students — or start selling your own.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Link
-                  to="/explore"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-brand-600 text-white rounded-xl font-semibold shadow-float hover:bg-brand-700 hover:scale-[1.02] active:scale-95 transition-all"
-                >
-                  Explore Marketplace <ArrowRight size={18} />
-                </Link>
-                <Link
-                  to="/sell"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white text-ink-800 rounded-xl font-semibold border border-ink-200 hover:border-brand-300 hover:bg-brand-50 transition-all"
-                >
-                  Start Selling
-                </Link>
-              </div>
+          {/* Centered Search Widget */}
+          <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-md border border-slate-200 p-2 sm:p-2.5 mb-5 text-left">
+            {/* Search Type Tabs */}
+            <div className="flex items-center gap-1.5 border-b border-slate-100 pb-2 mb-2 px-2">
+              <button
+                type="button"
+                onClick={() => setActiveSearchTab('products')}
+                className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors ${
+                  activeSearchTab === 'products'
+                    ? 'bg-[#0F766E] text-white shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                Products
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveSearchTab('services')}
+                className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors ${
+                  activeSearchTab === 'services'
+                    ? 'bg-[#0F766E] text-white shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                Services
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveSearchTab('startups')}
+                className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors ${
+                  activeSearchTab === 'startups'
+                    ? 'bg-[#0F766E] text-white shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                Startups
+              </button>
             </div>
 
-            {/* Hero visual - empty state or product collage */}
-            <div className="relative hidden lg:block animate-scale-in">
-              {hasProducts ? (
-                <div className="grid grid-cols-2 gap-4">
-                  {products.slice(0, 4).map((p, i) => (
-                    <Link
-                      to={`/product/${p.id}`}
-                      key={p.id}
-                      className={`group bg-white rounded-2xl shadow-card overflow-hidden border border-ink-100 hover:shadow-float transition-all ${i % 2 === 1 ? 'mt-8' : ''}`}
-                    >
-                      <div className="aspect-square overflow-hidden bg-ink-100">
-                        <img src={p.images[0]} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                      </div>
-                      <div className="p-3">
-                        <p className="text-xs text-brand-600 font-medium mb-0.5">{p.category}</p>
-                        <h3 className="text-sm font-semibold text-ink-800 truncate">{p.title}</h3>
-                        <div className="flex items-center justify-between mt-1.5">
-                          <span className="font-bold text-ink-900">₹{p.price}</span>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <div className="bg-white rounded-3xl shadow-card border border-ink-100 p-8 text-center">
-                  <div className="w-16 h-16 mx-auto bg-brand-50 rounded-2xl flex items-center justify-center mb-4">
-                    <Store size={28} className="text-brand-600" />
-                  </div>
-                  <h3 className="font-bold text-ink-800 mb-2">Be the first to sell here</h3>
-                  <p className="text-sm text-ink-500 mb-4">No listings yet. Start your journey as a student entrepreneur today.</p>
-                  <Link
-                    to="/sell"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-600 text-white rounded-xl text-sm font-semibold hover:bg-brand-700 transition-colors"
-                  >
-                    <Sparkles size={16} /> Start Selling
-                  </Link>
-                </div>
-              )}
-              <div className="absolute -bottom-4 -left-4 bg-white rounded-2xl shadow-float p-4 border border-ink-100 max-w-[200px]">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <ShieldCheck size={20} className="text-brand-600" />
-                  <span className="text-sm font-bold text-ink-800">Student Verified</span>
-                </div>
-                <p className="text-xs text-ink-500">Every seller is a verified student.</p>
+            {/* Input & Submit */}
+            <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder={
+                    activeSearchTab === 'services'
+                      ? 'Search tutoring, design, web dev, photography...'
+                      : activeSearchTab === 'startups'
+                      ? 'Search student-founded ventures, agencies, labs...'
+                      : 'What are you looking for?'
+                  }
+                  className="w-full bg-transparent pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                />
               </div>
-            </div>
+              <Button type="submit" variant="primary" size="md">
+                <Search className="w-4 h-4 sm:hidden" />
+                <span className="hidden sm:inline">Search</span>
+              </Button>
+            </form>
+          </div>
+
+          {/* Popular Search Chips */}
+          <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-slate-500 mb-8">
+            <span className="font-semibold text-slate-700">Popular:</span>
+            {popularChips.map(chip => (
+              <button
+                key={chip.label}
+                type="button"
+                onClick={() => {
+                  if (chip.type === 'services') {
+                    navigate(`/services?q=${encodeURIComponent(chip.q)}`);
+                  } else {
+                    navigate(`/products?q=${encodeURIComponent(chip.q)}`);
+                  }
+                }}
+                className="px-2.5 py-1 rounded-full bg-white border border-slate-200 text-slate-600 hover:border-teal-400 hover:text-[#0F766E] hover:bg-teal-50/50 transition-all cursor-pointer font-medium"
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Two CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link to="/products">
+              <Button variant="primary" size="lg" rightIcon={<ArrowRight className="w-4 h-4" />}>
+                Explore marketplace
+              </Button>
+            </Link>
+            <Link to="/sell">
+              <Button variant="secondary" size="lg" leftIcon={<Plus className="w-4 h-4" />}>
+                Start selling
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* FIND / CREATE / BELONG */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl sm:text-4xl font-bold text-ink-900 mb-3">What you can do on AMPLOFY</h2>
-        </div>
-        <div className="grid sm:grid-cols-3 gap-5 mb-14">
-          <div className="bg-white rounded-2xl p-6 shadow-soft border border-ink-100 text-center">
-            <div className="w-14 h-14 mx-auto rounded-2xl bg-brand-50 flex items-center justify-center mb-4">
-              <Search size={26} className="text-brand-600" />
-            </div>
-            <h3 className="font-bold text-lg text-ink-800 mb-2">FIND</h3>
-            <p className="text-sm text-ink-500 leading-relaxed">Discover products, services, creators and opportunities from fellow students.</p>
-          </div>
-          <div className="bg-white rounded-2xl p-6 shadow-soft border border-ink-100 text-center">
-            <div className="w-14 h-14 mx-auto rounded-2xl bg-accent-50 flex items-center justify-center mb-4">
-              <Sparkles size={26} className="text-accent-600" />
-            </div>
-            <h3 className="font-bold text-lg text-ink-800 mb-2">CREATE</h3>
-            <p className="text-sm text-ink-500 leading-relaxed">Sell products, showcase your skills, offer services and build something of your own.</p>
-          </div>
-          <div className="bg-white rounded-2xl p-6 shadow-soft border border-ink-100 text-center">
-            <div className="w-14 h-14 mx-auto rounded-2xl bg-rose-50 flex items-center justify-center mb-4">
-              <Users size={26} className="text-rose-500" />
-            </div>
-            <h3 className="font-bold text-lg text-ink-800 mb-2">BELONG</h3>
-            <p className="text-sm text-ink-500 leading-relaxed">Connect with a community built specifically for students.</p>
-          </div>
-        </div>
-
-        <div className="text-center mb-10">
-          <h2 className="text-2xl sm:text-3xl font-bold text-ink-900 mb-3">Why students use AMPLOFY</h2>
-        </div>
-
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {features.map(f => (
-            <div key={f.title} className="bg-white rounded-2xl p-6 shadow-soft border border-ink-100 hover:shadow-card transition-shadow">
-              <div className={`w-12 h-12 rounded-xl ${f.color} flex items-center justify-center mb-4`}>
-                <f.icon size={24} className="text-white" />
+      {/* 2. CATEGORY STRIP */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-3 pt-1">
+          {categories.map(cat => (
+            <Link
+              key={cat.name}
+              to={cat.type === 'services' ? `/services?category=${cat.param}` : `/products?category=${cat.param}`}
+              className="group flex flex-col items-center justify-center min-w-[5.25rem] p-3 rounded-xl bg-white border border-slate-200 hover:border-[#0F766E] hover:bg-teal-50/30 hover:-translate-y-0.5 transition-all duration-150 shadow-2xs shrink-0"
+            >
+              <div className="w-10 h-10 rounded-lg bg-teal-50 group-hover:bg-[#0F766E] flex items-center justify-center text-[#0F766E] group-hover:text-white transition-colors mb-1.5">
+                <cat.icon className="w-5 h-5" />
               </div>
-              <h3 className="font-bold text-ink-800 mb-2">{f.title}</h3>
-              <p className="text-sm text-ink-500 leading-relaxed">{f.desc}</p>
-            </div>
+              <span className="text-xs font-semibold text-slate-700 group-hover:text-[#0F766E] transition-colors whitespace-nowrap">
+                {cat.name}
+              </span>
+            </Link>
           ))}
         </div>
       </section>
 
-      {/* Categories */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
-        <div className="flex items-end justify-between mb-8">
+      {/* 3. FEATURED STARTUPS ROW */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-ink-900 mb-2">Explore Categories</h2>
-            <p className="text-ink-500">Find exactly what you're looking for.</p>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-600">
+                Student Ventures
+              </span>
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+              Featured Startups
+            </h2>
           </div>
-          <Link to="/explore" className="hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700">
-            View all <ArrowRight size={16} />
+          <Link
+            to="/startups"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0F766E] hover:text-[#115E59] transition-colors"
+          >
+            <span>View all startups</span>
+            <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
-        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-          {categories.map(cat => {
-            const Icon = categoryIcons[cat.name] || Package;
-            return (
-              <Link
-                key={cat.name}
-                to={`/explore?category=${encodeURIComponent(cat.name)}`}
-                className="group bg-white rounded-2xl p-4 sm:p-5 shadow-soft border border-ink-100 hover:shadow-card hover:border-brand-200 transition-all text-center"
-              >
-                <div className={`w-12 h-12 mx-auto rounded-xl ${categoryColors[cat.name]} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
-                  <Icon size={22} />
-                </div>
-                <h3 className="font-semibold text-sm text-ink-800 mb-0.5">{cat.name}</h3>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Trending / Listings */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
-        <div className="flex items-end justify-between mb-8">
-          <div>
-            <div className="inline-flex items-center gap-2 text-accent-600 font-semibold text-sm mb-2">
-              <TrendingUp size={18} /> Listings
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-ink-900">Recent Listings</h2>
-          </div>
-          {hasProducts && (
-            <Link to="/explore" className="hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700">
-              View all <ArrowRight size={16} />
-            </Link>
-          )}
-        </div>
-
-        {hasProducts ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
-            {products.slice(0, 8).map(p => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-16 bg-white rounded-2xl border border-ink-100">
-            <div className="w-16 h-16 mx-auto bg-brand-50 rounded-2xl flex items-center justify-center mb-4">
-              <Package size={28} className="text-brand-400" />
-            </div>
-            <h3 className="font-bold text-ink-800 mb-2">No listings yet</h3>
-            <p className="text-sm text-ink-500 mb-5">Be one of the first students to sell on AMPLOFY.</p>
-            <Link
-              to="/sell"
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-600 text-white rounded-xl text-sm font-semibold hover:bg-brand-700 transition-colors"
-            >
-              <Sparkles size={16} /> Start Selling
-            </Link>
-          </div>
-        )}
-      </section>
-
-      {/* Student Creators */}
-      <section className="bg-gradient-to-b from-brand-50/50 to-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 text-brand-600 font-semibold text-sm mb-2">
-              <Users size={18} /> Creators
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-ink-900 mb-2">Student Creators to Discover</h2>
-            <p className="text-ink-500 max-w-xl mx-auto">Support student entrepreneurs and discover unique products made by talented students.</p>
-          </div>
-
-          <div className="text-center py-12 bg-white rounded-2xl border border-ink-100">
-            <div className="w-16 h-16 mx-auto bg-brand-50 rounded-2xl flex items-center justify-center mb-4">
-              <Users size={28} className="text-brand-400" />
-            </div>
-            <h3 className="font-bold text-ink-800 mb-2">No creators yet</h3>
-            <p className="text-sm text-ink-500 mb-5">Be the first student creator on AMPLOFY. Set up your store and start selling.</p>
-            <Link
-              to="/join"
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-600 text-white rounded-xl text-sm font-semibold hover:bg-brand-700 transition-colors"
-            >
-              <UserPlus size={16} /> Join AMPLOFY
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-ink-900 mb-3">How It Works</h2>
-          <p className="text-ink-500">Get started in four simple steps.</p>
-        </div>
-
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 relative">
-          {steps.map((step, i) => (
-            <div key={step.num} className="relative">
-              <div className="bg-white rounded-2xl p-6 shadow-soft border border-ink-100 text-center">
-                <div className="w-14 h-14 mx-auto rounded-2xl bg-brand-50 flex items-center justify-center mb-4 relative">
-                  <step.icon size={26} className="text-brand-600" />
-                  <span className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-brand-600 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                    {step.num}
-                  </span>
-                </div>
-                <h3 className="font-bold text-ink-800 mb-2">{step.title}</h3>
-                <p className="text-sm text-ink-500">{step.desc}</p>
-              </div>
-              {i < steps.length - 1 && (
-                <div className="hidden lg:block absolute top-1/2 -right-3 w-6 h-px bg-ink-200" />
-              )}
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {featuredStartups.map(startup => (
+            <StartupCard key={startup.id} startup={startup} />
           ))}
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-20">
-        <div className="relative overflow-hidden bg-gradient-to-br from-brand-600 to-brand-800 rounded-3xl px-6 py-14 sm:px-12 sm:py-16 text-center">
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-72 h-72 bg-brand-400/20 rounded-full blur-3xl" />
+      {/* 3.5 STARTUP "LOOKING FOR" & COLLABORATIONS */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="bg-gradient-to-r from-purple-900/5 via-indigo-900/5 to-teal-900/5 border border-purple-200/70 rounded-3xl p-6 sm:p-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-xs font-bold mb-2">
+                <Handshake size={14} className="text-purple-600" />
+                <span>Collegiate Collaborator Hub</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+                Startups Are Looking For...
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-xl">
+                Early-stage campus ventures actively seeking co-founders, clothing designers, beta testers, and marketing collaborators.
+              </p>
+            </div>
+            <Link
+              to="/looking-for"
+              className="text-xs sm:text-sm font-bold text-purple-700 hover:text-purple-800 inline-flex items-center gap-1 shrink-0"
+            >
+              <span>Explore all {lookingForRequests.length} requests</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
-          <div className="relative">
-            <p className="text-brand-200 font-semibold text-sm mb-2 tracking-wide">AMPLOFY</p>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 text-balance">
-              Find. Create. Belong.
-            </h2>
-            <p className="text-brand-100 text-lg mb-8 max-w-xl mx-auto">
-              The marketplace and community built for students. Join today — it's free to explore and free to start selling.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {lookingForRequests.slice(0, 3).map(req => (
+              <LookingForCard
+                key={req.id}
+                request={req}
+                onRespond={r => setRespondingRequest(r)}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 4. TWO-COLUMN BLOCK: FEATURED PRODUCTS | TRENDING SERVICES */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Column: Featured Products (2x2 Grid) */}
+          <div className="lg:col-span-7">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                Featured Products
+              </h2>
               <Link
-                to="/explore"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white text-brand-700 rounded-xl font-semibold hover:scale-[1.02] active:scale-95 transition-all"
+                to="/products"
+                className="text-xs font-semibold text-[#0F766E] hover:underline inline-flex items-center gap-1"
               >
-                Explore Marketplace <ArrowRight size={18} />
+                <span>View all</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {productItems.map(product => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </div>
+
+          {/* Right Column: Trending Services (Stacked List Cards) */}
+          <div className="lg:col-span-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                Trending Services
+              </h2>
               <Link
-                to="/sell"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-brand-500 text-white rounded-xl font-semibold border border-brand-400 hover:bg-brand-400 transition-colors"
+                to="/services"
+                className="text-xs font-semibold text-[#0F766E] hover:underline inline-flex items-center gap-1"
               >
-                Start Selling
+                <span>View all</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            <div className="space-y-3">
+              {trendingServices.map(service => (
+                <ServiceListCard key={service.id} service={service} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. HOW IT WORKS (3 Steps) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="text-center max-w-xl mx-auto mb-10">
+          <span className="text-xs font-bold uppercase tracking-wider text-amber-600 mb-1 block">
+            Simple & Transparent
+          </span>
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+            How It Works
+          </h2>
+          <p className="text-sm text-slate-500 mt-2">
+            Campus commerce made safe, direct, and completely free of hidden middlemen.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-xl border border-slate-200 p-6 text-center hover:shadow-md transition-shadow">
+            <div className="w-12 h-12 rounded-2xl bg-teal-50 text-[#0F766E] font-bold text-lg flex items-center justify-center mx-auto mb-4 border border-teal-100">
+              1
+            </div>
+            <h3 className="font-bold text-base text-slate-900 mb-1.5">Post</h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              List products you want to sell or professional services you provide in under 60 seconds.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-xl border border-slate-200 p-6 text-center hover:shadow-md transition-shadow">
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 font-bold text-lg flex items-center justify-center mx-auto mb-4 border border-amber-100">
+              2
+            </div>
+            <h3 className="font-bold text-base text-slate-900 mb-1.5">Connect</h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Buyers and clients reach out directly via verified WhatsApp, email, or order inquiry forms.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-xl border border-slate-200 p-6 text-center hover:shadow-md transition-shadow">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 font-bold text-lg flex items-center justify-center mx-auto mb-4 border border-indigo-100">
+              3
+            </div>
+            <h3 className="font-bold text-base text-slate-900 mb-1.5">Get It Done</h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Meet up in trusted public campus locations or deliver work digitally with timeline tracking.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* 6. JOIN THE COMMUNITY BLOCK (Amber eyebrow, Image left, Text right) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-10 lg:p-12 shadow-sm overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+            {/* Image Left */}
+            <div className="lg:col-span-6 relative">
+              <div className="aspect-[4/3] rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shadow-sm">
+                <img
+                  src="https://images.pexels.com/photos/1438081/pexels-photo-1438081.jpeg?auto=compress&cs=tinysrgb&w=1000"
+                  alt="Students on campus collaboration"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+
+            {/* Text Right */}
+            <div className="lg:col-span-6 space-y-5">
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-600 block">
+                JOIN THE COMMUNITY
+              </span>
+
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                More than a marketplace — it's your campus network
+              </h2>
+
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Connect with verified students and student-founded startups to buy, sell, and exchange skills. Every listing is backed by our campus peer review system so you can trade with confidence.
+              </p>
+
+              {/* Checklist */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center gap-3 text-sm text-slate-700 font-medium">
+                  <div className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-200">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  </div>
+                  <span>Verified student accounts &amp; verified startups</span>
+                </div>
+
+                <div className="flex items-center gap-3 text-sm text-slate-700 font-medium">
+                  <div className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-200">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  </div>
+                  <span>Secure orders, custom quotes &amp; verified reviews</span>
+                </div>
+
+                <div className="flex items-center gap-3 text-sm text-slate-700 font-medium">
+                  <div className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-200">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  </div>
+                  <span>Zero fees for students (startups pay a small fee)</span>
+                </div>
+              </div>
+
+              <div className="pt-3">
+                <Link to="/join">
+                  <Button variant="primary" size="md">
+                    Get Started Free
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 7. FINAL TEAL CTA BANNER */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="bg-[#0F766E] rounded-2xl p-8 sm:p-12 text-center text-white relative overflow-hidden shadow-lg">
+          <div className="relative z-10 max-w-2xl mx-auto space-y-4">
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+              Got something to sell or a skill to share?
+            </h2>
+            <p className="text-sm sm:text-base text-teal-100 font-normal leading-relaxed">
+              Post your first ad in under a minute and reach thousands of students on campus today.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
+              <Link to="/sell">
+                <button
+                  type="button"
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold text-sm bg-white text-[#0F766E] hover:bg-teal-50 transition-colors shadow-sm"
+                >
+                  Create Listing
+                </button>
+              </Link>
+              <Link to="/products">
+                <button
+                  type="button"
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-lg font-semibold text-sm border border-white text-white hover:bg-white/10 transition-colors"
+                >
+                  Browse Categories
+                </button>
               </Link>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Looking For Response Modal */}
+      <RespondLookingForModal
+        isOpen={!!respondingRequest}
+        onClose={() => setRespondingRequest(null)}
+        request={respondingRequest}
+      />
     </div>
   );
 }

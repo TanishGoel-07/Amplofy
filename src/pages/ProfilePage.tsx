@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
-  MapPin, Calendar, MessageCircle, Flag, Ban, Grid3x3, FileText,
+  MapPin, Calendar, Mail, Flag, Ban, Grid3x3, FileText,
   Star, Package, Users, UserPlus, Store, ArrowRight,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
@@ -9,6 +9,7 @@ import ProductCard from '@/components/ProductCard';
 import PostCard from '@/components/PostCard';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import StarRating from '@/components/StarRating';
+import ContactSellerModal from '@/components/ContactSellerModal';
 
 type Tab = 'products' | 'posts' | 'reviews' | 'about';
 
@@ -18,6 +19,7 @@ export default function ProfilePage() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('products');
   const [showReportModal, setShowReportModal] = useState(false);
+  const [isContactOpen, setIsContactOpen] = useState(false);
 
   // If no id, show current user's profile or sign-in prompt
   const isOwnProfile = !id || id === currentUser?.id;
@@ -157,18 +159,12 @@ export default function ProfilePage() {
                     {isFollowing ? 'Following' : 'Follow'}
                   </button>
                   <button
-                    onClick={handleMessage}
-                    className="px-5 py-2.5 rounded-xl text-sm font-semibold border border-ink-200 text-ink-700 hover:bg-ink-50 transition-colors flex items-center justify-center gap-2"
+                    onClick={() => setIsContactOpen(true)}
+                    className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#0F766E] text-white hover:bg-[#115E59] transition-colors flex items-center justify-center gap-2"
                   >
-                    <MessageCircle size={16} /> Message
+                    <Mail size={16} /> Contact Seller
                   </button>
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => toggleSellerFavourite(user.id)}
-                      className={`flex-1 px-3 py-2 rounded-xl text-xs font-semibold border transition-colors ${isFavSeller ? 'bg-amber-50 border-amber-200 text-amber-700' : 'border-ink-200 text-ink-600 hover:bg-ink-50'}`}
-                    >
-                      {isFavSeller ? 'Saved' : 'Save'}
-                    </button>
                     <button
                       onClick={() => setShowReportModal(true)}
                       className="w-10 h-9 rounded-xl border border-ink-200 text-ink-400 hover:text-error-500 hover:border-error-200 flex items-center justify-center transition-colors"
@@ -316,6 +312,26 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {user && (
+        <ContactSellerModal
+          isOpen={isContactOpen}
+          onClose={() => setIsContactOpen(false)}
+          seller={{
+            id: user.id,
+            name: user.name,
+            avatar: user.avatar,
+            college: user.college,
+            accountType: user.accountType,
+            isVerified: user.isVerified || user.verified,
+            contactWhatsapp: user.contactWhatsapp,
+            contactEmail: user.contactEmail || user.email,
+            contactInstagram: user.contactInstagram,
+            showContact: user.showContact ?? true,
+          }}
+          listingTitle={`${user.name}'s Profile`}
+        />
       )}
     </div>
   );

@@ -3,7 +3,13 @@ import { supabase } from '@/lib/supabase';
 import type {
   Product, Conversation, NotificationItem, Post, User, WantedRequest, Offer,
   BlockedUser, TransactionStatus, Comment,
+  Startup, Listing, Order, Quote, OrderNote, Review, OrderStatus,
+  StartupLookingFor, LookingForResponse, AccountType,
 } from '@/data/types';
+import {
+  mockStudents, mockStartups, mockProducts, mockServices, mockOrders, mockReviews, mockOrderNotes,
+  mockLookingForRequests, mockLookingForResponses,
+} from '@/data/mockData';
 
 // ─── DB row types (raw from Supabase) ───
 interface ProfileRow {
@@ -280,6 +286,48 @@ interface AppState {
   togglePostLike: (id: string) => Promise<void>;
   addComment: (postId: string, text: string) => Promise<{ error: string | null }>;
 
+  // Campus marketplace entities
+  startups: Startup[];
+  services: Listing[];
+  listings: Listing[];
+  orders: Order[];
+  quotes: Quote[];
+  orderNotes: OrderNote[];
+  reviews: Review[];
+  // Startup Looking For system
+  lookingForRequests: StartupLookingFor[];
+  lookingForResponses: LookingForResponse[];
+  addLookingForRequest: (req: Partial<StartupLookingFor>) => Promise<{ error: string | null; id?: string }>;
+  updateLookingForRequest: (id: string, updates: Partial<StartupLookingFor>) => Promise<void>;
+  deleteLookingForRequest: (id: string) => Promise<void>;
+  addLookingForResponse: (res: Partial<LookingForResponse>) => Promise<{ error: string | null; id?: string }>;
+  updateLookingForResponseStatus: (id: string, status: LookingForResponse['status']) => Promise<void>;
+  getStartupBySlug: (slug: string) => Startup | undefined;
+  getListingById: (id: string) => Listing | undefined;
+  addListing: (listing: Partial<Listing>) => Promise<{ error: string | null; id?: string }>;
+  updateListingStatus: (id: string, status: 'draft' | 'live' | 'featured' | 'paused') => Promise<void>;
+  deleteListing: (id: string) => Promise<void>;
+  createOrder: (order: Partial<Order>) => Promise<{ error: string | null; id?: string }>;
+  updateOrderStatus: (orderId: string, status: OrderStatus) => Promise<void>;
+  addOrderNote: (note: Partial<OrderNote>) => Promise<{ error: string | null; id?: string }>;
+  addReview: (review: Partial<Review>) => Promise<{ error: string | null; id?: string }>;
+  createStartup: (startup: Partial<Startup>) => Promise<{ error: string | null; startup?: Startup }>;
+  registerCampusUser: (params: {
+    name: string;
+    email: string;
+    password?: string;
+    accountType: AccountType;
+    college: string;
+    department?: string;
+    year?: string;
+    contactWhatsapp?: string;
+    contactEmail?: string;
+    contactInstagram?: string;
+    showContact?: boolean;
+    isVerified?: boolean;
+    startupData?: Partial<Startup>;
+  }) => Promise<{ error: string | null; user?: User }>;
+
   // helpers
   getProfileById: (id: string) => Promise<User | null>;
   fetchProfilesByIds: (ids: string[]) => Promise<User[]>;
@@ -290,12 +338,49 @@ interface AppState {
 const AppContext = createContext<AppState | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [isAuthed, setIsAuthed] = useState(false);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [verificationStatus, setVerificationStatus] = useState<'none' | 'required' | 'pending' | 'verified' | 'failed' | 'expired'>('none');
+  const [currentUser, setCurrentUser] = useState<User | null>(() => mockStudents[0]);
+  const [isAuthed, setIsAuthed] = useState(true);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<'none' | 'required' | 'pending' | 'verified' | 'failed' | 'expired'>('verified');
 
-  const [products, setProducts] = useState<Product[]>([]);
+  const [listings, setListings] = useState<Listing[]>(() => [...mockProducts, ...mockServices]);
+  const [services, setServices] = useState<Listing[]>(() => mockServices);
+  const [startups, setStartups] = useState<Startup[]>(() => mockStartups);
+  const [orders, setOrders] = useState<Order[]>(() => mockOrders);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [orderNotes, setOrderNotes] = useState<OrderNote[]>(() => mockOrderNotes);
+  const [reviews, setReviews] = useState<Review[]>(() => mockReviews);
+  const [lookingForRequests, setLookingForRequests] = useState<StartupLookingFor[]>(() => mockLookingForRequests);
+  const [lookingForResponses, setLookingForResponses] = useState<LookingForResponse[]>(() => mockLookingForResponses);
+
+  const [products, setProducts] = useState<Product[]>(() =>
+    mockProducts.map(l => ({
+      id: l.id,
+      title: l.title,
+      description: l.description,
+      price: l.basePrice,
+      category: l.category as Product['category'],
+      condition: (l.condition || 'New') as Product['condition'],
+      listingType: 'product',
+      listingStatus: 'published',
+      transactionStatus: 'available',
+      images: l.images,
+      location: l.location,
+      campus: l.campus,
+      sellerId: l.sellerId,
+      sellerName: l.seller?.name || '',
+      sellerAvatar: l.seller?.avatar || '',
+      sellerVerified: l.seller?.isVerified || false,
+      rating: l.rating,
+      reviewCount: l.reviewCount,
+      postedDate: l.createdAt,
+      quantity: 1,
+      tags: [l.category, l.ownerType],
+      views: l.views,
+      favourites: 0,
+      featured: l.status === 'featured',
+    }))
+  );
   const [wantedRequests, setWantedRequests] = useState<WantedRequest[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
@@ -792,6 +877,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (updates.yearOfStudy !== undefined) dbUpdates.year_of_study = updates.yearOfStudy;
     if (updates.interests !== undefined) dbUpdates.interests = updates.interests;
     if (updates.skills !== undefined) dbUpdates.skills = updates.skills;
+    if (updates.accountType !== undefined) dbUpdates.account_type = updates.accountType;
+    if (updates.college !== undefined) dbUpdates.college = updates.college;
+    if (updates.department !== undefined) dbUpdates.department = updates.department;
+    if (updates.year !== undefined) dbUpdates.year = updates.year;
+    if (updates.isVerified !== undefined) {
+      dbUpdates.is_verified = updates.isVerified;
+      dbUpdates.verified = updates.isVerified;
+    }
+    if (updates.contactWhatsapp !== undefined) dbUpdates.contact_whatsapp = updates.contactWhatsapp;
+    if (updates.contactEmail !== undefined) dbUpdates.contact_email = updates.contactEmail;
+    if (updates.contactInstagram !== undefined) dbUpdates.contact_instagram = updates.contactInstagram;
+    if (updates.showContact !== undefined) dbUpdates.show_contact = updates.showContact;
 
     const { error } = await supabase
       .from('profiles')
@@ -1291,6 +1388,404 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const unreadNotificationCount = notifications.filter(n => !n.read).length;
 
+  // ─── Campus Marketplace Handlers ───
+  const getStartupBySlug = useCallback((slug: string) => {
+    return startups.find(s => s.slug === slug);
+  }, [startups]);
+
+  const getListingById = useCallback((id: string) => {
+    return listings.find(l => l.id === id);
+  }, [listings]);
+
+  const addListing = useCallback(async (listingData: Partial<Listing>): Promise<{ error: string | null; id?: string }> => {
+    const id = `lst-${Date.now()}`;
+    const newListing: Listing = {
+      id,
+      sellerId: currentUser?.id || 'guest',
+      type: listingData.type || 'product',
+      ownerType: listingData.ownerType || 'profile',
+      startupId: listingData.startupId || null,
+      title: listingData.title || 'Untitled Listing',
+      description: listingData.description || '',
+      category: listingData.category || 'Other',
+      condition: listingData.condition || 'New',
+      status: listingData.status || 'live',
+      priceType: listingData.priceType || 'fixed',
+      basePrice: listingData.basePrice || 0,
+      deliveryDays: listingData.deliveryDays || 1,
+      images: listingData.images && listingData.images.length > 0 ? listingData.images : ['https://images.pexels.com/photos/303383/pexels-photo-303383.jpeg?auto=compress&cs=tinysrgb&w=800'],
+      location: listingData.location || currentUser?.location || 'On Campus',
+      distance: '0.2 mi',
+      campus: currentUser?.campus || 'Main Campus',
+      rating: 5.0,
+      reviewCount: 0,
+      views: 1,
+      acceptCustomQuotes: listingData.acceptCustomQuotes ?? true,
+      packages: listingData.packages || [],
+      startup: listingData.startup || (listingData.startupId ? startups.find(s => s.id === listingData.startupId) : undefined),
+      createdAt: new Date().toISOString(),
+      seller: currentUser ? {
+        id: currentUser.id,
+        name: currentUser.name,
+        avatar: currentUser.avatar,
+        department: currentUser.department,
+        college: currentUser.college,
+        accountType: currentUser.accountType || 'student',
+        isVerified: currentUser.isVerified || false,
+        contactWhatsapp: currentUser.contactWhatsapp,
+        contactEmail: currentUser.contactEmail,
+        contactInstagram: currentUser.contactInstagram,
+        showContact: currentUser.showContact ?? true,
+      } : undefined,
+    };
+
+    setListings(prev => [newListing, ...prev]);
+    if (newListing.type === 'service') {
+      setServices(prev => [newListing, ...prev]);
+    } else {
+      setProducts(prev => [{
+        id: newListing.id,
+        title: newListing.title,
+        description: newListing.description,
+        price: newListing.basePrice,
+        category: newListing.category as Product['category'],
+        condition: (newListing.condition || 'New') as Product['condition'],
+        listingType: 'product',
+        listingStatus: 'published',
+        transactionStatus: 'available',
+        images: newListing.images,
+        location: newListing.location,
+        campus: newListing.campus,
+        sellerId: newListing.sellerId,
+        sellerName: newListing.seller?.name || '',
+        sellerAvatar: newListing.seller?.avatar || '',
+        sellerVerified: newListing.seller?.isVerified || false,
+        rating: 5.0,
+        reviewCount: 0,
+        postedDate: newListing.createdAt,
+        quantity: 1,
+        tags: [newListing.category],
+        views: 1,
+        favourites: 0,
+        featured: false,
+      }, ...prev]);
+    }
+
+    return { error: null, id };
+  }, [currentUser]);
+
+  const updateListingStatus = useCallback(async (id: string, status: 'draft' | 'live' | 'featured' | 'paused') => {
+    setListings(prev => prev.map(l => l.id === id ? { ...l, status } : l));
+    setServices(prev => prev.map(s => s.id === id ? { ...s, status } : s));
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, listingStatus: status === 'paused' ? 'paused' : 'published' } : p));
+  }, []);
+
+  const deleteListing = useCallback(async (id: string) => {
+    setListings(prev => prev.filter(l => l.id !== id));
+    setServices(prev => prev.filter(s => s.id !== id));
+    setProducts(prev => prev.filter(p => p.id !== id));
+  }, []);
+
+  const createOrder = useCallback(async (orderData: Partial<Order>): Promise<{ error: string | null; id?: string }> => {
+    const id = `ord-${Date.now()}`;
+    const targetListing = listings.find(l => l.id === orderData.listingId);
+
+    const newOrder: Order = {
+      id,
+      listingId: orderData.listingId || '',
+      listingTitle: orderData.listingTitle || targetListing?.title || 'Campus Order',
+      listingImage: orderData.listingImage || targetListing?.images[0],
+      listingType: orderData.listingType || targetListing?.type || 'product',
+      packageId: orderData.packageId || null,
+      packageTier: orderData.packageTier,
+      buyerId: currentUser?.id || 'guest-buyer',
+      buyerName: currentUser?.name || 'Campus Student',
+      buyerAvatar: currentUser?.avatar,
+      sellerId: orderData.sellerId || targetListing?.sellerId || '',
+      sellerName: orderData.sellerName || targetListing?.seller?.name || 'Seller',
+      sellerAvatar: orderData.sellerAvatar || targetListing?.seller?.avatar,
+      startupId: orderData.startupId || targetListing?.startupId || null,
+      startupName: targetListing?.startup?.name,
+      status: orderData.status || 'inquiry',
+      amount: orderData.amount || targetListing?.basePrice || 0,
+      inquiryMessage: orderData.inquiryMessage || '',
+      createdAt: new Date().toISOString(),
+      notesCount: orderData.inquiryMessage ? 1 : 0,
+    };
+
+    setOrders(prev => [newOrder, ...prev]);
+
+    if (orderData.inquiryMessage) {
+      setOrderNotes(prev => [
+        ...prev,
+        {
+          id: `note-${Date.now()}`,
+          orderId: id,
+          authorId: currentUser?.id || 'guest-buyer',
+          authorName: currentUser?.name || 'Campus Student',
+          authorAvatar: currentUser?.avatar,
+          body: orderData.inquiryMessage || '',
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+    }
+
+    return { error: null, id };
+  }, [currentUser, listings]);
+
+  const updateOrderStatus = useCallback(async (orderId: string, status: OrderStatus) => {
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
+  }, []);
+
+  const addOrderNote = useCallback(async (noteData: Partial<OrderNote>): Promise<{ error: string | null; id?: string }> => {
+    const id = `note-${Date.now()}`;
+    const newNote: OrderNote = {
+      id,
+      orderId: noteData.orderId || '',
+      authorId: currentUser?.id || 'guest',
+      authorName: currentUser?.name || 'User',
+      authorAvatar: currentUser?.avatar,
+      body: noteData.body || '',
+      attachmentUrl: noteData.attachmentUrl,
+      createdAt: new Date().toISOString(),
+    };
+
+    setOrderNotes(prev => [...prev, newNote]);
+    setOrders(prev => prev.map(o => o.id === noteData.orderId ? { ...o, notesCount: (o.notesCount || 0) + 1 } : o));
+    return { error: null, id };
+  }, [currentUser]);
+
+  const addReview = useCallback(async (reviewData: Partial<Review>): Promise<{ error: string | null; id?: string }> => {
+    const id = `rev-${Date.now()}`;
+    const newReview: Review = {
+      id,
+      orderId: reviewData.orderId,
+      listingId: reviewData.listingId,
+      reviewerId: currentUser?.id || 'reviewer',
+      reviewerName: currentUser?.name || 'Campus Reviewer',
+      reviewerAvatar: currentUser?.avatar || '',
+      revieweeId: reviewData.revieweeId || '',
+      rating: reviewData.rating || 5,
+      comment: reviewData.comment || '',
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+
+    setReviews(prev => [newReview, ...prev]);
+    return { error: null, id };
+  }, [currentUser]);
+
+  const createStartup = useCallback(async (data: Partial<Startup>): Promise<{ error: string | null; startup?: Startup }> => {
+    const id = `stp-${Date.now()}`;
+    const slug = (data.name || 'startup')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+
+    const newStartup: Startup = {
+      id,
+      ownerId: currentUser?.id || 'founder',
+      name: data.name || 'My Campus Startup',
+      slug,
+      logoUrl: data.logoUrl || 'https://images.pexels.com/photos/256514/pexels-photo-256514.jpeg?auto=compress&cs=tinysrgb&w=200',
+      coverUrl: data.coverUrl || 'https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg?auto=compress&cs=tinysrgb&w=1200',
+      tagline: data.tagline || 'Student-founded venture on campus.',
+      description: data.description || '',
+      category: data.category || 'Development',
+      college: data.college || currentUser?.college || 'Campus University',
+      teamSize: data.teamSize || 1,
+      website: data.website || '',
+      socialLinks: data.socialLinks || {},
+      contactWhatsapp: data.contactWhatsapp || currentUser?.contactWhatsapp,
+      contactEmail: data.contactEmail || currentUser?.contactEmail,
+      contactInstagram: data.contactInstagram || currentUser?.contactInstagram,
+      showContact: data.showContact ?? true,
+      isVerified: false,
+      rating: 5.0,
+      reviewCount: 0,
+      servicesCount: 0,
+      productsCount: 0,
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+
+    setStartups(prev => [newStartup, ...prev]);
+    return { error: null, startup: newStartup };
+  }, [currentUser]);
+
+  const registerCampusUser = useCallback(async (params: {
+    name: string;
+    email: string;
+    password?: string;
+    accountType: AccountType;
+    college: string;
+    department?: string;
+    year?: string;
+    contactWhatsapp?: string;
+    contactEmail?: string;
+    contactInstagram?: string;
+    showContact?: boolean;
+    isVerified?: boolean;
+    startupData?: Partial<Startup>;
+  }): Promise<{ error: string | null; user?: User }> => {
+    let newId = `usr-${Date.now()}`;
+    if (params.password) {
+      try {
+        const { data } = await supabase.auth.signUp({
+          email: params.email,
+          password: params.password,
+          options: { data: { name: params.name } },
+        });
+        if (data?.user) {
+          newId = data.user.id;
+        }
+      } catch {
+        // fallback to state
+      }
+    }
+
+    const newUser: User = {
+      id: newId,
+      name: params.name,
+      username: params.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, ''),
+      email: params.email,
+      avatar: `https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=300`,
+      bio: params.accountType === 'startup'
+        ? `Founder at ${params.startupData?.name || 'Campus Venture'}.`
+        : `${params.department || 'Student'} at ${params.college}.`,
+      location: params.college,
+      campus: params.college,
+      college: params.college,
+      department: params.department || 'General Studies',
+      year: params.year || 'Undergraduate',
+      verified: params.isVerified ?? true,
+      isVerified: params.isVerified ?? true,
+      verificationStatus: params.isVerified ? 'verified' : 'pending',
+      accountType: params.accountType,
+      contactWhatsapp: params.contactWhatsapp,
+      contactEmail: params.contactEmail || params.email,
+      contactInstagram: params.contactInstagram,
+      showContact: params.showContact ?? true,
+      role: params.accountType === 'buyer' ? 'buyer' : 'seller',
+      followers: 1,
+      following: 0,
+      joinedDate: new Date().toISOString().split('T')[0],
+      rating: 5.0,
+      reviewCount: 0,
+      listingCount: 0,
+    };
+
+    setCurrentUser(newUser);
+    setIsAuthed(true);
+    setVerificationStatus(newUser.verificationStatus);
+
+    if (params.accountType === 'startup' && params.startupData) {
+      const stpId = `stp-${Date.now()}`;
+      const slug = (params.startupData.name || 'my-startup')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+
+      const newStartup: Startup = {
+        id: stpId,
+        ownerId: newId,
+        name: params.startupData.name || 'Campus Venture',
+        slug,
+        logoUrl: params.startupData.logoUrl || 'https://images.pexels.com/photos/256514/pexels-photo-256514.jpeg?auto=compress&cs=tinysrgb&w=200',
+        coverUrl: params.startupData.coverUrl || 'https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        tagline: params.startupData.tagline || 'Student-founded startup on campus.',
+        description: params.startupData.description || 'Campus venture building technology and design services.',
+        category: params.startupData.category || 'Development',
+        college: params.college,
+        teamSize: params.startupData.teamSize || 2,
+        website: params.startupData.website || '',
+        contactWhatsapp: params.contactWhatsapp,
+        contactEmail: params.contactEmail || params.email,
+        contactInstagram: params.contactInstagram,
+        showContact: params.showContact ?? true,
+        isVerified: params.isVerified ?? true,
+        rating: 5.0,
+        reviewCount: 0,
+        servicesCount: 0,
+        productsCount: 0,
+        createdAt: new Date().toISOString().split('T')[0],
+      };
+
+      setStartups(prev => [newStartup, ...prev]);
+    }
+
+    return { error: null, user: newUser };
+  }, []);
+
+  // ─── Looking For System Methods ───
+  const addLookingForRequest = useCallback(async (req: Partial<StartupLookingFor>): Promise<{ error: string | null; id?: string }> => {
+    const newId = req.id || `lf-${Date.now()}`;
+    const targetStartup = startups.find(s => s.id === req.startupId) || startups[0];
+    const newReq: StartupLookingFor = {
+      id: newId,
+      startupId: targetStartup?.id || 'b1111111-1111-4111-b111-111111111111',
+      startupName: targetStartup?.name || req.startupName || 'Campus Startup',
+      startupSlug: targetStartup?.slug || req.startupSlug || 'campus-startup',
+      startupLogo: targetStartup?.logoUrl || req.startupLogo || 'https://images.pexels.com/photos/256514/pexels-photo-256514.jpeg?auto=compress&cs=tinysrgb&w=200',
+      startupCollege: targetStartup?.college || req.startupCollege || 'Main Campus',
+      startupCategory: targetStartup?.category || req.startupCategory || 'Startup',
+      isStartupVerified: targetStartup?.isVerified ?? true,
+      type: req.type || 'co-founder',
+      title: req.title || 'Looking For Collaborators',
+      description: req.description || '',
+      skillsNeeded: req.skillsNeeded || [],
+      compensationType: req.compensationType || 'unpaid-collab',
+      compensationDetails: req.compensationDetails || '',
+      timeCommitment: req.timeCommitment || 'Flexible',
+      locationType: req.locationType || 'hybrid',
+      campus: req.campus || targetStartup?.college || 'Campus Quad',
+      status: 'open',
+      createdAt: new Date().toISOString().split('T')[0],
+      responseCount: 0,
+      contactWhatsapp: req.contactWhatsapp || targetStartup?.contactWhatsapp || currentUser?.contactWhatsapp,
+      contactEmail: req.contactEmail || targetStartup?.contactEmail || currentUser?.contactEmail || currentUser?.email,
+      contactInstagram: req.contactInstagram || targetStartup?.contactInstagram || currentUser?.contactInstagram,
+      showContact: req.showContact ?? true,
+    };
+    setLookingForRequests(prev => [newReq, ...prev]);
+    return { error: null, id: newId };
+  }, [startups, currentUser]);
+
+  const updateLookingForRequest = useCallback(async (id: string, updates: Partial<StartupLookingFor>) => {
+    setLookingForRequests(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+  }, []);
+
+  const deleteLookingForRequest = useCallback(async (id: string) => {
+    setLookingForRequests(prev => prev.filter(r => r.id !== id));
+  }, []);
+
+  const addLookingForResponse = useCallback(async (res: Partial<LookingForResponse>): Promise<{ error: string | null; id?: string }> => {
+    const newId = res.id || `lfr-${Date.now()}`;
+    const newRes: LookingForResponse = {
+      id: newId,
+      requestId: res.requestId || '',
+      startupId: res.startupId || '',
+      startupName: res.startupName || '',
+      applicantId: res.applicantId || currentUser?.id || 'anon',
+      applicantName: res.applicantName || currentUser?.name || 'Campus Student',
+      applicantEmail: res.applicantEmail || currentUser?.contactEmail || currentUser?.email || 'student@campus.edu',
+      applicantWhatsapp: res.applicantWhatsapp || currentUser?.contactWhatsapp,
+      applicantInstagram: res.applicantInstagram || currentUser?.contactInstagram,
+      applicantAvatar: res.applicantAvatar || currentUser?.avatar || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=300',
+      applicantCollege: res.applicantCollege || currentUser?.college || 'University',
+      applicantMajor: res.applicantMajor || currentUser?.department || 'Student',
+      roleOrPitch: res.roleOrPitch || '',
+      portfolioUrl: res.portfolioUrl || '',
+      status: 'pending',
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    setLookingForResponses(prev => [newRes, ...prev]);
+    setLookingForRequests(prev => prev.map(r => r.id === res.requestId ? { ...r, responseCount: (r.responseCount || 0) + 1 } : r));
+    return { error: null, id: newId };
+  }, [currentUser]);
+
+  const updateLookingForResponseStatus = useCallback(async (id: string, status: LookingForResponse['status']) => {
+    setLookingForResponses(prev => prev.map(r => r.id === id ? { ...r, status } : r));
+  }, []);
+
   return (
     <AppContext.Provider value={{
       isAuthed, authLoading, currentUser,
@@ -1306,6 +1801,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
       conversations, sendMessage, startConversation,
       notifications, markNotificationRead, markAllNotificationsRead, unreadNotificationCount,
       posts, togglePostLike, addComment,
+      // Campus marketplace
+      startups,
+      services,
+      listings,
+      orders,
+      quotes,
+      orderNotes,
+      reviews,
+      // Looking For
+      lookingForRequests,
+      lookingForResponses,
+      addLookingForRequest,
+      updateLookingForRequest,
+      deleteLookingForRequest,
+      addLookingForResponse,
+      updateLookingForResponseStatus,
+      getStartupBySlug,
+      getListingById,
+      addListing,
+      updateListingStatus,
+      deleteListing,
+      createOrder,
+      updateOrderStatus,
+      addOrderNote,
+      addReview,
+      createStartup,
+      registerCampusUser,
       getProfileById,
       fetchProfilesByIds,
       searchProfiles,

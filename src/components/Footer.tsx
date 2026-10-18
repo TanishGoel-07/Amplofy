@@ -1,78 +1,146 @@
 import { Link } from 'react-router-dom';
-import { Store, Mail, Instagram, Twitter, Github } from 'lucide-react';
+import { Store, Instagram, Twitter, Linkedin, Github, ShieldCheck } from 'lucide-react';
 
 export default function Footer() {
   return (
-    <footer className="bg-ink-900 text-ink-300 mt-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
-          <div className="col-span-2 md:col-span-1">
-            <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center">
-                <Store size={20} className="text-white" />
+    <footer className="bg-slate-900 text-slate-400 mt-20 border-t border-slate-800">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 lg:py-16">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
+          {/* Brand info */}
+          <div className="col-span-2">
+            <Link to="/" className="flex items-center gap-2.5 mb-4 group">
+              <div className="w-9 h-9 rounded-xl bg-[#0F766E] flex items-center justify-center text-white shadow-sm">
+                <Store className="w-5 h-5" />
               </div>
-              <span className="font-bold text-lg text-white tracking-tight">AMPLOFY</span>
+              <span className="font-bold text-xl text-white tracking-tight">AMPLOFY</span>
             </Link>
-            <p className="text-sm text-ink-400 leading-relaxed">
-              The marketplace and community built for students.
+            <p className="text-sm text-slate-400 max-w-sm leading-relaxed mb-4">
+              The two-sided campus marketplace where students and student-founded startups trade goods,
+              offer professional services, and build real businesses.
             </p>
-            <p className="text-xs text-ink-500 mt-4 font-medium">Find. Create. Belong.</p>
+            <div className="flex items-center gap-2 text-xs text-teal-400 font-semibold bg-teal-950/60 border border-teal-800/60 w-fit px-3 py-1.5 rounded-full">
+              <ShieldCheck className="w-4 h-4 text-teal-400" />
+              <span>Verified Campus Community</span>
+            </div>
           </div>
 
+          {/* Company */}
           <div>
-            <h4 className="font-semibold text-white text-sm mb-4">Marketplace</h4>
+            <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Company</h4>
             <ul className="space-y-2.5 text-sm">
-              <li><Link to="/explore" className="hover:text-brand-300 transition-colors">Explore</Link></li>
-              <li><Link to="/sell" className="hover:text-brand-300 transition-colors">Sell Something</Link></li>
-              <li><Link to="/wanted" className="hover:text-brand-300 transition-colors">Wanted</Link></li>
+              <li>
+                <Link to="/about" className="hover:text-white transition-colors">
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link to="/how-it-works" className="hover:text-white transition-colors">
+                  How It Works
+                </Link>
+              </li>
+              <li>
+                <Link to="/startups" className="hover:text-white transition-colors">
+                  Student Startups
+                </Link>
+              </li>
+              <li>
+                <span className="text-slate-500 cursor-not-allowed">Careers</span>
+              </li>
+              <li>
+                <span className="text-slate-500 cursor-not-allowed">Press</span>
+              </li>
             </ul>
           </div>
 
+          {/* Support */}
           <div>
-            <h4 className="font-semibold text-white text-sm mb-4">Community</h4>
+            <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Support</h4>
             <ul className="space-y-2.5 text-sm">
-              <li><Link to="/community" className="hover:text-brand-300 transition-colors">Community</Link></li>
-              <li><Link to="/messages" className="hover:text-brand-300 transition-colors">Messages</Link></li>
-              <li><Link to="/favourites" className="hover:text-brand-300 transition-colors">Favourites</Link></li>
+              <li>
+                <Link to="/safety" className="hover:text-white transition-colors">
+                  Safety Tips
+                </Link>
+              </li>
+              <li>
+                <Link to="/community-guidelines" className="hover:text-white transition-colors">
+                  Help Center
+                </Link>
+              </li>
+              <li>
+                <Link to="/report-problem" className="hover:text-white transition-colors">
+                  Report Issue
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="hover:text-white transition-colors">
+                  Contact Support
+                </Link>
+              </li>
             </ul>
           </div>
 
+          {/* Legal */}
           <div>
-            <h4 className="font-semibold text-white text-sm mb-4">Help &amp; Safety</h4>
+            <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Legal</h4>
             <ul className="space-y-2.5 text-sm">
-              <li><Link to="/safety" className="hover:text-brand-300 transition-colors">Safety</Link></li>
-              <li><Link to="/community-guidelines" className="hover:text-brand-300 transition-colors">Community Guidelines</Link></li>
-              <li><Link to="/report-problem" className="hover:text-brand-300 transition-colors">Report a Problem</Link></li>
-              <li><Link to="/contact" className="hover:text-brand-300 transition-colors">Contact</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-white text-sm mb-4">Legal</h4>
-            <ul className="space-y-2.5 text-sm">
-              <li><Link to="/terms" className="hover:text-brand-300 transition-colors">Terms &amp; Conditions</Link></li>
-              <li><Link to="/privacy" className="hover:text-brand-300 transition-colors">Privacy Policy</Link></li>
-              <li><Link to="/prohibited" className="hover:text-brand-300 transition-colors">Prohibited Items</Link></li>
+              <li>
+                <Link to="/terms" className="hover:text-white transition-colors">
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy" className="hover:text-white transition-colors">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link to="/prohibited" className="hover:text-white transition-colors">
+                  Prohibited Items
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-ink-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-ink-500">
-            © 2026 AMPLOFY. Prototype — not yet legally ready for public launch.
-          </p>
-          <div className="flex items-center gap-3">
-            <a href="#" className="w-9 h-9 rounded-lg bg-ink-800 hover:bg-brand-600 flex items-center justify-center transition-colors" aria-label="Instagram">
-              <Instagram size={18} />
+        {/* Bottom bar */}
+        <div className="mt-12 pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+          <p>© 2026 AMPLOFY. Find. Create. Belong. Built for campus life.</p>
+          <div className="flex items-center gap-4">
+            <a
+              href="https://instagram.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram"
+              className="p-2 rounded-lg bg-slate-800 hover:bg-[#0F766E] hover:text-white transition-colors"
+            >
+              <Instagram className="w-4 h-4" />
             </a>
-            <a href="#" className="w-9 h-9 rounded-lg bg-ink-800 hover:bg-brand-600 flex items-center justify-center transition-colors" aria-label="Twitter">
-              <Twitter size={18} />
+            <a
+              href="https://twitter.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Twitter / X"
+              className="p-2 rounded-lg bg-slate-800 hover:bg-[#0F766E] hover:text-white transition-colors"
+            >
+              <Twitter className="w-4 h-4" />
             </a>
-            <a href="#" className="w-9 h-9 rounded-lg bg-ink-800 hover:bg-brand-600 flex items-center justify-center transition-colors" aria-label="Email">
-              <Mail size={18} />
+            <a
+              href="https://linkedin.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="LinkedIn"
+              className="p-2 rounded-lg bg-slate-800 hover:bg-[#0F766E] hover:text-white transition-colors"
+            >
+              <Linkedin className="w-4 h-4" />
             </a>
-            <a href="#" className="w-9 h-9 rounded-lg bg-ink-800 hover:bg-brand-600 flex items-center justify-center transition-colors" aria-label="GitHub">
-              <Github size={18} />
+            <a
+              href="https://github.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="GitHub"
+              className="p-2 rounded-lg bg-slate-800 hover:bg-[#0F766E] hover:text-white transition-colors"
+            >
+              <Github className="w-4 h-4" />
             </a>
           </div>
         </div>

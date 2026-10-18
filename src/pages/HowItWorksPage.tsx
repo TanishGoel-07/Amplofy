@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import {
   UserPlus, ShieldCheck, Store, TrendingUp, ArrowRight,
-  Check, BadgeCheck, MessageCircle, Heart, Package,
+  Check, BadgeCheck, Phone, Briefcase, Package,
 } from 'lucide-react';
 
 const steps = [
@@ -30,16 +30,16 @@ const steps = [
     num: '4',
     icon: TrendingUp,
     title: 'Connect and Buy/Sell',
-    desc: 'Message sellers, follow creators, leave reviews, and build your student business.',
-    points: ['Message sellers directly', 'Save favourites and follow creators', 'Leave and receive reviews'],
+    desc: 'Connect with sellers directly via WhatsApp, email, or Instagram, order custom services, and build your campus reputation.',
+    points: ['Contact sellers directly', 'Order packages and request custom quotes', 'Leave verified campus reviews'],
   },
 ];
 
 const features = [
-  { icon: Package, title: 'Browse Listings', desc: 'Explore products across 10 categories' },
-  { icon: Heart, title: 'Save Favourites', desc: 'Bookmark products, creators, and posts' },
-  { icon: MessageCircle, title: 'Message Sellers', desc: 'Chat directly with product creators' },
-  { icon: BadgeCheck, title: 'Student Verified', desc: 'Every seller is a verified student' },
+  { icon: Package, title: 'Browse Campus Goods', desc: 'Explore products across verified colleges' },
+  { icon: Briefcase, title: 'Hire Student Talent', desc: 'Tutoring, dev, design, audio & labor' },
+  { icon: Phone, title: 'Contact Directly', desc: 'Direct WhatsApp, campus email & Instagram' },
+  { icon: BadgeCheck, title: 'Verified Campus Trust', desc: 'Verified students & student-founded startups' },
 ];
 
 export default function HowItWorksPage() {

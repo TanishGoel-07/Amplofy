@@ -1,3 +1,5 @@
+export type AccountType = 'student' | 'startup' | 'buyer';
+
 export type UserRole = 'buyer' | 'seller' | 'admin';
 
 export type ListingType = 'product' | 'pre-owned' | 'digital' | 'service';
@@ -6,17 +8,27 @@ export type Category =
   | 'Handmade'
   | 'Fashion'
   | 'Books'
+  | 'Textbooks'
   | 'Electronics'
   | 'Art & Crafts'
   | 'Digital Products'
   | 'Stationery'
   | 'Services'
   | 'Pre-Owned'
+  | 'Dorm'
+  | 'Tutoring'
+  | 'Design'
+  | 'Development'
+  | 'Photography'
+  | 'Labor'
+  | 'Coaching'
+  | 'Music'
+  | 'Marketing'
   | 'Other';
 
 export type Condition = 'New' | 'Like New' | 'Good' | 'Fair' | 'Pre-Owned' | 'Digital' | 'N/A';
 
-export type ListingStatus = 'draft' | 'pending-review' | 'published' | 'rejected' | 'removed' | 'sold' | 'unavailable';
+export type ListingStatus = 'draft' | 'pending-review' | 'published' | 'live' | 'featured' | 'paused' | 'rejected' | 'removed' | 'sold' | 'unavailable';
 
 export type VerificationStatus = 'none' | 'required' | 'pending' | 'verified' | 'failed' | 'expired';
 
@@ -26,12 +38,22 @@ export interface User {
   id: string;
   name: string;
   username: string;
+  email?: string;
   avatar: string;
   bio: string;
   location: string;
   campus: string;
+  college?: string;
+  department?: string;
+  year?: string;
   verified: boolean;
+  isVerified?: boolean;
   verificationStatus: VerificationStatus;
+  accountType?: AccountType;
+  contactWhatsapp?: string;
+  contactEmail?: string;
+  contactInstagram?: string;
+  showContact?: boolean;
   role: UserRole;
   followers: number;
   following: number;
@@ -43,6 +65,167 @@ export interface User {
   yearOfStudy?: string;
   interests?: string[];
   skills?: string[];
+}
+
+export interface Startup {
+  id: string;
+  ownerId: string;
+  name: string;
+  slug: string;
+  logoUrl: string;
+  coverUrl: string;
+  tagline: string;
+  description: string;
+  category: string;
+  college: string;
+  teamSize: number;
+  website?: string;
+  socialLinks?: {
+    instagram?: string;
+    linkedin?: string;
+    twitter?: string;
+    github?: string;
+  };
+  contactWhatsapp?: string;
+  contactEmail?: string;
+  contactInstagram?: string;
+  showContact: boolean;
+  isVerified: boolean;
+  rating: number;
+  reviewCount: number;
+  servicesCount?: number;
+  productsCount?: number;
+  createdAt: string;
+}
+
+export interface StartupMember {
+  id: string;
+  startupId: string;
+  profileId: string;
+  role: string;
+  profile?: User;
+}
+
+export interface ServicePackage {
+  id: string;
+  listingId: string;
+  tier: 'basic' | 'standard' | 'premium';
+  title: string;
+  price: number;
+  deliveryDays: number;
+  revisions: number;
+  features: string[];
+}
+
+export interface Listing {
+  id: string;
+  sellerId: string;
+  type: 'product' | 'service';
+  ownerType: 'profile' | 'startup';
+  startupId?: string | null;
+  startup?: Startup;
+  title: string;
+  description: string;
+  category: string;
+  condition?: string;
+  status: 'draft' | 'live' | 'featured' | 'paused';
+  priceType: 'fixed' | 'hourly' | 'starting_at';
+  basePrice: number;
+  deliveryDays?: number;
+  images: string[];
+  location: string;
+  distance?: string;
+  campus: string;
+  rating: number;
+  reviewCount: number;
+  views: number;
+  acceptCustomQuotes?: boolean;
+  seller?: {
+    id: string;
+    name: string;
+    avatar: string;
+    department?: string;
+    college?: string;
+    accountType: AccountType;
+    isVerified: boolean;
+    contactWhatsapp?: string;
+    contactEmail?: string;
+    contactInstagram?: string;
+    showContact: boolean;
+  };
+  packages?: ServicePackage[];
+  createdAt: string;
+}
+
+export type OrderStatus =
+  | 'inquiry'
+  | 'quote_sent'
+  | 'accepted'
+  | 'in_progress'
+  | 'delivered'
+  | 'completed'
+  | 'reviewed'
+  | 'cancelled';
+
+export interface Order {
+  id: string;
+  listingId: string;
+  listingTitle?: string;
+  listingImage?: string;
+  listingType?: 'product' | 'service';
+  packageId?: string | null;
+  packageTier?: 'basic' | 'standard' | 'premium';
+  buyerId: string;
+  buyerName?: string;
+  buyerAvatar?: string;
+  sellerId: string;
+  sellerName?: string;
+  sellerAvatar?: string;
+  startupId?: string | null;
+  startupName?: string;
+  status: OrderStatus;
+  amount: number;
+  inquiryMessage: string;
+  createdAt: string;
+  notesCount?: number;
+}
+
+export interface Quote {
+  id: string;
+  listingId: string;
+  listingTitle?: string;
+  buyerId: string;
+  buyerName?: string;
+  sellerId: string;
+  sellerName?: string;
+  message: string;
+  amount: number;
+  status: 'pending' | 'accepted' | 'declined' | 'expired';
+  createdAt: string;
+}
+
+export interface OrderNote {
+  id: string;
+  orderId: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar?: string;
+  body: string;
+  attachmentUrl?: string;
+  createdAt: string;
+}
+
+export interface Review {
+  id: string;
+  orderId?: string;
+  listingId?: string;
+  reviewerId: string;
+  reviewerName: string;
+  reviewerAvatar: string;
+  revieweeId: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
 }
 
 export interface Product {
@@ -102,6 +285,74 @@ export interface WantedRequest {
   expiryDate: string;
   status: 'active' | 'expired' | 'fulfilled' | 'deleted';
 }
+
+export type LookingForCategory =
+  | 'co-founder'
+  | 'designer-dev'
+  | 'marketing'
+  | 'beta-testers'
+  | 'first-customers'
+  | 'product-feedback'
+  | 'startup-collab'
+  | 'other';
+
+export type CompensationType =
+  | 'equity'
+  | 'paid'
+  | 'stipend'
+  | 'revenue-share'
+  | 'free-product'
+  | 'college-credit'
+  | 'unpaid-collab';
+
+export type LookingForLocationType = 'on-campus' | 'remote' | 'hybrid';
+
+export interface StartupLookingFor {
+  id: string;
+  startupId: string;
+  startupName: string;
+  startupSlug: string;
+  startupLogo: string;
+  startupCollege: string;
+  startupCategory: string;
+  isStartupVerified: boolean;
+  type: LookingForCategory;
+  title: string;
+  description: string;
+  skillsNeeded: string[];
+  compensationType: CompensationType;
+  compensationDetails?: string;
+  timeCommitment: string;
+  locationType: LookingForLocationType;
+  campus?: string;
+  status: 'open' | 'filled' | 'paused';
+  createdAt: string;
+  responseCount: number;
+  contactWhatsapp?: string;
+  contactEmail?: string;
+  contactInstagram?: string;
+  showContact: boolean;
+}
+
+export interface LookingForResponse {
+  id: string;
+  requestId: string;
+  startupId: string;
+  startupName: string;
+  applicantId: string;
+  applicantName: string;
+  applicantEmail: string;
+  applicantWhatsapp?: string;
+  applicantInstagram?: string;
+  applicantAvatar: string;
+  applicantCollege: string;
+  applicantMajor?: string;
+  roleOrPitch: string;
+  portfolioUrl?: string;
+  status: 'pending' | 'reviewed' | 'connected' | 'archived';
+  createdAt: string;
+}
+
 
 export interface BlockedUser {
   id: string;
