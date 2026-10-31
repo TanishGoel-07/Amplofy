@@ -2,37 +2,35 @@ import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
-  Package,
   ShoppingBag,
   GraduationCap,
   Award,
   Users,
   BarChart3,
-  Settings,
   DollarSign,
   Eye,
   Star,
   Clock,
   PlusCircle,
   Search,
-  MoreVertical,
   Pause,
   Play,
   Trash2,
-  ExternalLink,
   ChevronRight,
-  TrendingUp,
-  ShieldCheck,
   Rocket,
   Edit,
   ArrowUpRight,
-  Sparkles,
   Handshake,
   Mail,
   PhoneCall,
-  CheckCircle,
+  ExternalLink,
+  ShieldCheck,
+  Compass,
+  Briefcase,
+  CheckCircle2,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { useUserMode } from '@/hooks/useUserMode';
 import { StatusChip } from '@/components/ui/Chip';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -68,10 +66,12 @@ const EARNINGS_DATA = {
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { mode: userMode, setMode: setUserMode } = useUserMode();
   const {
     currentUser,
     isAuthed,
     listings,
+    services,
     orders,
     reviews,
     startups,
@@ -91,13 +91,10 @@ export default function DashboardPage() {
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // Mode: Seller vs Buyer
-  const [userMode, setUserMode] = useState<'seller' | 'buyer'>('seller');
-
   // Working Earnings chart range
   const [chartRange, setChartRange] = useState<'7' | '30' | '90'>('7');
 
-  // Listing table search filter
+  // Service table search filter
   const [listingSearch, setListingSearch] = useState('');
 
   if (!isAuthed || !currentUser) {
@@ -108,7 +105,7 @@ export default function DashboardPage() {
         </div>
         <h2 className="text-xl font-bold text-slate-900">Sign in to access dashboard</h2>
         <p className="text-xs text-slate-500">
-          Manage your campus listings, orders, client inquiries, and earnings in one place.
+          Manage your startup services, client inquiries, project milestones, and earnings in one place.
         </p>
         <Link to="/signin">
           <Button variant="primary" size="md" className="w-full">
@@ -121,13 +118,14 @@ export default function DashboardPage() {
 
   const isStartupAccount = currentUser.accountType === 'startup';
 
-  // Filter user's listings
+  // Filter user's service listings
   const myListings = useMemo(() => {
     return listings.filter(
       l =>
-        l.sellerId === currentUser.id ||
-        l.sellerId === '11111111-1111-4111-a111-111111111111' ||
-        l.sellerId === '33333333-3333-4333-a333-333333333333'
+        l.type === 'service' &&
+        (l.sellerId === currentUser.id ||
+         l.sellerId === '11111111-1111-4111-a111-111111111111' ||
+         l.sellerId === '33333333-3333-4333-a333-333333333333')
     );
   }, [listings, currentUser]);
 
@@ -139,26 +137,37 @@ export default function DashboardPage() {
     );
   }, [myListings, listingSearch]);
 
-  // Total views and sales calculations
+  // Total views and metrics
   const totalViews = myListings.reduce((sum, l) => sum + (l.views || 0), 0);
   const recentOrders = orders.slice(0, 4);
 
-  // Response time: 18 min -> fast -> green color logic
+  // My collaboration applications (as buyer / applicant)
+  const myCollabs = useMemo(() => {
+    return lookingForResponses.filter(r => r.applicantId === currentUser.id);
+  }, [lookingForResponses, currentUser]);
+
+  // Total amount invested in services as buyer
+  const totalSpentAsBuyer = useMemo(() => {
+    const total = orders.reduce((sum, o) => sum + (o.amount || 0), 0);
+    return total > 0 ? total : 380;
+  }, [orders]);
+
+  // Response time calculation
   const responseMinutes = 18;
-  const isFastResponse = responseMinutes <= 30; // lower = green, higher = red
+  const isFastResponse = responseMinutes <= 30;
 
   // Handler for toggle pause / live
   const handleTogglePause = async (listing: Listing) => {
     const newStatus = listing.status === 'paused' ? 'live' : 'paused';
     await updateListingStatus(listing.id, newStatus);
-    toast.success(`Listing ${newStatus === 'paused' ? 'paused' : 'resumed and now live'}.`);
+    toast.success(`Service listing ${newStatus === 'paused' ? 'paused' : 'resumed and now live'}.`);
   };
 
   // Handler for delete
   const handleDelete = async (listingId: string) => {
-    if (window.confirm('Are you sure you want to delete this listing?')) {
+    if (window.confirm('Are you sure you want to delete this service listing?')) {
       await deleteListing(listingId);
-      toast.success('Listing removed.');
+      toast.success('Service listing removed.');
     }
   };
 
@@ -193,17 +202,6 @@ export default function DashboardPage() {
             <div className="bg-slate-100 p-1 rounded-xl flex items-center justify-between text-xs font-semibold">
               <button
                 type="button"
-                onClick={() => setUserMode('seller')}
-                className={`flex-1 py-1.5 rounded-lg transition-all text-center ${
-                  userMode === 'seller'
-                    ? 'bg-white text-[#0F766E] shadow-2xs font-bold'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Seller Mode
-              </button>
-              <button
-                type="button"
                 onClick={() => setUserMode('buyer')}
                 className={`flex-1 py-1.5 rounded-lg transition-all text-center ${
                   userMode === 'buyer'
@@ -212,6 +210,17 @@ export default function DashboardPage() {
                 }`}
               >
                 Buyer Mode
+              </button>
+              <button
+                type="button"
+                onClick={() => setUserMode('seller')}
+                className={`flex-1 py-1.5 rounded-lg transition-all text-center ${
+                  userMode === 'seller'
+                    ? 'bg-white text-[#0F766E] shadow-2xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Founder Mode
               </button>
             </div>
 
@@ -230,24 +239,28 @@ export default function DashboardPage() {
                 <span>Overview</span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => setActiveNav('listings')}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
-                  activeNav === 'listings'
-                    ? 'bg-teal-50 text-[#0F766E]'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Package className="w-4 h-4 text-slate-500" />
-                  <span>My Listings</span>
-                </div>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                  {myListings.length}
-                </span>
-              </button>
+              {/* SELLER MODE ONLY: My Services */}
+              {userMode === 'seller' && (
+                <button
+                  type="button"
+                  onClick={() => setActiveNav('listings')}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
+                    activeNav === 'listings'
+                      ? 'bg-teal-50 text-[#0F766E]'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Briefcase className="w-4 h-4 text-slate-500" />
+                    <span>My Services</span>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                    {myListings.length}
+                  </span>
+                </button>
+              )}
 
+              {/* Orders tab (Client Orders for seller, Hired Orders for buyer) */}
               <button
                 type="button"
                 onClick={() => setActiveNav('orders')}
@@ -259,17 +272,38 @@ export default function DashboardPage() {
               >
                 <div className="flex items-center gap-3">
                   <ShoppingBag className="w-4 h-4 text-slate-500" />
-                  <span>Orders & Sales</span>
+                  <span>{userMode === 'seller' ? 'Client Orders' : 'Hired Services'}</span>
                 </div>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
                   {orders.length}
                 </span>
               </button>
 
+              {/* BUYER MODE: Collab Pitches */}
+              {userMode === 'buyer' && (
+                <button
+                  type="button"
+                  onClick={() => setActiveNav('my-collabs')}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
+                    activeNav === 'my-collabs'
+                      ? 'bg-teal-50 text-[#0F766E] font-bold'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Handshake className="w-4 h-4 text-purple-600" />
+                    <span>My Collab Pitches</span>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-bold">
+                    {myCollabs.length}
+                  </span>
+                </button>
+              )}
+
               {/* COMMUNITY Section */}
               <div className="pt-3 pb-1 px-3">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Community
+                  Campus Network
                 </span>
               </div>
 
@@ -297,21 +331,39 @@ export default function DashboardPage() {
               >
                 <div className="flex items-center gap-3">
                   <Award className="w-4 h-4 text-slate-500" />
-                  <span>Reviews</span>
+                  <span>{userMode === 'seller' ? 'Venture Reviews' : 'My Reviews'}</span>
                 </div>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 font-bold">
                   ★ 4.9
                 </span>
               </button>
 
-              {/* STARTUP EXTRA TABS (Team & Analytics) */}
-              {isStartupAccount && (
+              {/* SELLER MODE: Startup extra tabs */}
+              {userMode === 'seller' && (
                 <>
                   <div className="pt-3 pb-1 px-3">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800">
                       Startup Venture
                     </span>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveNav('looking-for')}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
+                      activeNav === 'looking-for'
+                        ? 'bg-purple-50 text-purple-900 font-bold'
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Handshake className="w-4 h-4 text-purple-600" />
+                      <span>"Looking For" Needs</span>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-bold">
+                      {lookingForRequests.length}
+                    </span>
+                  </button>
 
                   <button
                     type="button"
@@ -328,24 +380,6 @@ export default function DashboardPage() {
 
                   <button
                     type="button"
-                    onClick={() => setActiveNav('looking-for')}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
-                      activeNav === 'looking-for'
-                        ? 'bg-purple-50 text-purple-900 font-bold'
-                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Handshake className="w-4 h-4 text-purple-600" />
-                      <span>Looking For (Collabs)</span>
-                    </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-bold">
-                      {lookingForRequests.length}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
                     onClick={() => setActiveNav('analytics')}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
                       activeNav === 'analytics'
@@ -358,468 +392,556 @@ export default function DashboardPage() {
                   </button>
                 </>
               )}
-
-              {userMode === 'buyer' && (
-                <button
-                  type="button"
-                  onClick={() => setActiveNav('my-collabs')}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
-                    activeNav === 'my-collabs'
-                      ? 'bg-teal-50 text-[#0F766E] font-bold'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Handshake className="w-4 h-4 text-purple-600" />
-                    <span>My Collab Pitches</span>
-                  </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                    {lookingForResponses.filter(r => r.applicantId === currentUser.id).length}
-                  </span>
-                </button>
-              )}
             </nav>
 
-            {/* Pro Seller Upgrade Card at Bottom */}
-            <div className="p-4 rounded-xl bg-gradient-to-br from-teal-900 to-slate-900 text-white space-y-2">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-300">
-                <Rocket className="w-3.5 h-3.5" />
-                <span>Pro Campus Seller</span>
-              </div>
-              <p className="text-[11px] text-slate-300 leading-snug">
-                Zero fees for students. Verified badges on all campus services.
-              </p>
-              <div className="pt-1">
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-white/20 text-white">
-                  Active Member Tier
-                </span>
-              </div>
-            </div>
-
-            {/* User Mini Profile + Settings Gear Icon */}
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <Avatar
-                  src={currentUser.avatar}
-                  name={currentUser.name}
-                  size="sm"
-                />
-                <div className="min-w-0">
-                  <div className="font-bold text-xs text-slate-900 truncate">
-                    {currentUser.name}
-                  </div>
-                  <div className="text-[11px] text-slate-400 truncate">
-                    {currentUser.college || 'Campus Member'}
-                  </div>
+            {/* Bottom Card */}
+            {userMode === 'buyer' ? (
+              <div className="p-4 rounded-xl bg-gradient-to-br from-teal-900 to-slate-900 text-white space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-amber-300">
+                  <Rocket className="w-3.5 h-3.5" />
+                  <span>Start Your Venture</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-snug">
+                  Have a skill or run a student startup? Switch to Founder Mode to list services and earn on campus.
+                </p>
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setUserMode('seller')}
+                    className="w-full py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-[11px] font-bold transition-colors"
+                  >
+                    Switch to Founder Mode
+                  </button>
                 </div>
               </div>
+            ) : (
+              <div className="p-4 rounded-xl bg-gradient-to-br from-teal-900 to-slate-900 text-white space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-amber-300">
+                  <Rocket className="w-3.5 h-3.5" />
+                  <span>Pro Campus Founder</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-snug">
+                  Zero commission cuts. Direct client contact and transparent milestone management.
+                </p>
+                <div className="pt-1">
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-white/20 text-white">
+                    Active Founder Tier
+                  </span>
+                </div>
+              </div>
+            )}
 
-              <Link
-                to="/settings"
-                className="w-8 h-8 rounded-lg bg-slate-50 text-slate-500 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center transition-colors shrink-0"
-                title="Settings"
-              >
-                <Settings className="w-4 h-4" />
-              </Link>
+            {/* User Mini Profile */}
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <Avatar src={currentUser.avatar} name={currentUser.name} size="sm" />
+                <div>
+                  <div className="text-xs font-bold text-slate-900">{currentUser.name}</div>
+                  <div className="text-[10px] text-slate-500 capitalize">{userMode} Mode • {currentUser.college}</div>
+                </div>
+              </div>
             </div>
           </div>
         </aside>
 
         {/* ========================================================
-            MAIN CONTENT AREA (9 COLS)
+            MAIN DASHBOARD CONTENT (9 COLS)
            ======================================================== */}
         <main className="lg:col-span-9 space-y-8">
-          {/* Top Action Header */}
+          {/* Top Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight capitalize">
-                {activeNav === 'overview' ? `${userMode === 'seller' ? 'Seller' : 'Buyer'} Dashboard` : activeNav.replace('_', ' ')}
+              <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+                {userMode === 'buyer'
+                  ? 'Buyer Dashboard'
+                  : 'Startup Founder Command Center'}
               </h1>
               <p className="text-xs text-slate-500 mt-0.5">
-                Welcome back, {currentUser.name}. Track your performance and client transactions.
+                {userMode === 'buyer'
+                  ? `Welcome back, ${currentUser.name}. Manage your hired startup services, deliverables, and collaboration pitches.`
+                  : `Welcome back, ${currentUser.name}. Track venture performance, client inquiries, and service listings.`}
               </p>
             </div>
 
-            <Link to="/sell">
-              <Button variant="primary" size="md" className="inline-flex items-center gap-1.5 self-start">
-                <PlusCircle className="w-4 h-4" />
-                <span>+ Create Listing</span>
-              </Button>
-            </Link>
+            {/* Top Action Button - Mode-Dependent */}
+            {userMode === 'buyer' ? (
+              <Link to="/services">
+                <Button variant="primary" size="md" className="inline-flex items-center gap-1.5 self-start">
+                  <Compass className="w-4 h-4" />
+                  <span>Browse Startup Services</span>
+                </Button>
+              </Link>
+            ) : (
+              <Link to="/sell">
+                <Button variant="primary" size="md" className="inline-flex items-center gap-1.5 self-start">
+                  <PlusCircle className="w-4 h-4" />
+                  <span>+ Post Service Offering</span>
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* TAB 1: OVERVIEW */}
           {activeNav === 'overview' && (
             <div className="space-y-8">
-              {/* 4 STAT CARDS */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* 1. Total Earnings */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-slate-500">Total Earnings</span>
-                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                      <DollarSign className="w-4 h-4" />
+              {/* ===================================================
+                  BUYER MODE OVERVIEW
+                 =================================================== */}
+              {userMode === 'buyer' ? (
+                <div className="space-y-8">
+                  {/* 4 BUYER STAT CARDS */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* 1. Hired Services */}
+                    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-500">Hired Services</span>
+                        <div className="w-8 h-8 rounded-lg bg-teal-50 text-[#0F766E] flex items-center justify-center">
+                          <ShoppingBag className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <div className="text-2xl font-extrabold text-slate-900">{orders.length}</div>
+                      <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#0F766E]">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Active project pipeline</span>
+                      </div>
+                    </div>
+
+                    {/* 2. Total Invested */}
+                    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-500">Total Invested</span>
+                        <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                          <DollarSign className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <div className="text-2xl font-extrabold text-slate-900">${totalSpentAsBuyer.toFixed(2)}</div>
+                      <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                        <span>Direct to student talent</span>
+                      </div>
+                    </div>
+
+                    {/* 3. Collab Pitches */}
+                    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-500">Collab Pitches</span>
+                        <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+                          <Handshake className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <div className="text-2xl font-extrabold text-slate-900">{myCollabs.length}</div>
+                      <div className="text-[11px] font-semibold text-purple-700">
+                        Applications to startups
+                      </div>
+                    </div>
+
+                    {/* 4. Campus Startups */}
+                    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-500">Campus Ventures</span>
+                        <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center">
+                          <Briefcase className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <div className="text-2xl font-extrabold text-slate-900">{startups.length}</div>
+                      <div className="text-[11px] font-semibold text-sky-700">
+                        Available on campus
+                      </div>
                     </div>
                   </div>
-                  <div className="text-2xl font-extrabold text-slate-900">$1,240.00</div>
-                  <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
-                    <ArrowUpRight className="w-3.5 h-3.5" />
-                    <span>+18.4% this month</span>
+
+                  {/* ACTIVE HIRED SERVICES LIST */}
+                  <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                      <div>
+                        <h3 className="text-base font-bold text-slate-900">
+                          My Hired Services &amp; Deliverables
+                        </h3>
+                        <p className="text-xs text-slate-500">
+                          Track progress, review package milestones, and stay in touch with founders.
+                        </p>
+                      </div>
+
+                      <Link to="/orders">
+                        <Button variant="secondary" size="sm" className="inline-flex items-center gap-1">
+                          <span>All Orders</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </Button>
+                      </Link>
+                    </div>
+
+                    <div className="divide-y divide-slate-100">
+                      {orders.map(order => (
+                        <div
+                          key={order.id}
+                          className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                        >
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2.5">
+                              <span className="font-bold text-sm text-slate-900">
+                                {order.listingTitle}
+                              </span>
+                              <StatusChip status={order.status} />
+                            </div>
+                            <div className="text-xs text-slate-500 flex items-center gap-2">
+                              <span>Service Package: Standard</span>
+                              <span>•</span>
+                              <span>Turnaround: 3-5 days</span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between sm:justify-end gap-3">
+                            <div className="text-right">
+                              <div className="text-sm font-extrabold text-slate-900">
+                                ${order.amount.toFixed(2)}
+                              </div>
+                              <div className="text-[11px] text-slate-400">
+                                {new Date(order.createdAt).toLocaleDateString()}
+                              </div>
+                            </div>
+
+                            <Link to={`/orders/${order.id}`}>
+                              <Button variant="secondary" size="sm" className="text-xs">
+                                Milestones
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* MY COLLABORATION PITCHES PREVIEW */}
+                  <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                      <div>
+                        <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                          <Handshake className="w-4 h-4 text-purple-600" />
+                          <span>My Startup Collab Applications</span>
+                        </h3>
+                        <p className="text-xs text-slate-500">
+                          Pitches and roles you've applied for on the Looking For board.
+                        </p>
+                      </div>
+                      <Link to="/looking-for">
+                        <Button variant="outline" size="sm" className="text-xs">
+                          Explore Roles
+                        </Button>
+                      </Link>
+                    </div>
+
+                    {myCollabs.length > 0 ? (
+                      <div className="space-y-3">
+                        {myCollabs.slice(0, 3).map(res => (
+                          <div key={res.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between gap-3">
+                            <div>
+                              <div className="font-bold text-xs text-slate-900">{res.startupName}</div>
+                              <p className="text-xs text-slate-600 line-clamp-1 italic">"{res.roleOrPitch}"</p>
+                            </div>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-800 border border-purple-200">
+                              {res.status.toUpperCase()}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6 text-xs text-slate-500">
+                        You haven't pitched to any startups yet. Explore open co-founder and collaborator needs on the Looking For board.
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                {/* 2. Listing Views */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-slate-500">Listing Views</span>
-                    <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center">
-                      <Eye className="w-4 h-4" />
+              ) : (
+                /* ===================================================
+                    SELLER (FOUNDER) MODE OVERVIEW
+                   =================================================== */
+                <div className="space-y-8">
+                  {/* 4 FOUNDER STAT CARDS */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* 1. Total Earnings */}
+                    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-500">Venture Revenue</span>
+                        <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                          <DollarSign className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <div className="text-2xl font-extrabold text-slate-900">$1,380.00</div>
+                      <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                        <span>+14.2% this week</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-2xl font-extrabold text-slate-900">{totalViews || 1842}</div>
-                  <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-sky-600">
-                    <ArrowUpRight className="w-3.5 h-3.5" />
-                    <span>+12.6% this week</span>
-                  </div>
-                </div>
 
-                {/* 3. Avg Rating */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-slate-500">Avg Rating</span>
-                    <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-                      <Star className="w-4 h-4 fill-amber-500" />
+                    {/* 2. Service Views */}
+                    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-500">Service Impressions</span>
+                        <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center">
+                          <Eye className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <div className="text-2xl font-extrabold text-slate-900">{totalViews || 1842}</div>
+                      <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-sky-600">
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                        <span>+12.6% this week</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-2xl font-extrabold text-slate-900">4.9</div>
-                  <div className="text-[11px] font-semibold text-amber-700">
-                    From 48 campus reviews
-                  </div>
-                </div>
 
-                {/* 4. Response Time (CRITICAL COLOR LOGIC: lower = green, higher = red) */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-slate-500">Response Time</span>
-                    <div
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                        isFastResponse ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
-                      }`}
-                    >
-                      <Clock className="w-4 h-4" />
+                    {/* 3. Avg Rating */}
+                    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-500">Campus Rating</span>
+                        <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                          <Star className="w-4 h-4 fill-amber-500" />
+                        </div>
+                      </div>
+                      <div className="text-2xl font-extrabold text-slate-900">4.9 ★</div>
+                      <div className="text-[11px] font-semibold text-amber-700">
+                        From 48 client reviews
+                      </div>
                     </div>
-                  </div>
-                  <div
-                    className={`text-2xl font-extrabold ${
-                      isFastResponse ? 'text-emerald-700' : 'text-red-600'
-                    }`}
-                  >
-                    {responseMinutes} min
-                  </div>
-                  <div
-                    className={`inline-flex items-center gap-1 text-[11px] font-semibold ${
-                      isFastResponse ? 'text-emerald-600' : 'text-red-500'
-                    }`}
-                  >
-                    <span>{isFastResponse ? '● Fast response (Top 5%)' : '▲ Higher than average'}</span>
-                  </div>
-                </div>
-              </div>
 
-              {/* EARNINGS AREA CHART WITH WORKING RANGE SELECTOR */}
-              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                      Revenue Trends
-                    </span>
-                    <div className="flex items-baseline gap-2 mt-0.5">
-                      <h3 className="text-2xl font-extrabold text-slate-900">{chart.total}</h3>
-                      <span className="text-xs font-bold text-emerald-600">{chart.change}</span>
-                    </div>
-                  </div>
-
-                  {/* Range Selector: 7 / 30 / 90 days */}
-                  <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl self-start sm:self-auto">
-                    {(['7', '30', '90'] as const).map(range => (
-                      <button
-                        key={range}
-                        type="button"
-                        onClick={() => setChartRange(range)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                          chartRange === range
-                            ? 'bg-white text-[#0F766E] shadow-2xs font-bold'
-                            : 'text-slate-600 hover:text-slate-900'
+                    {/* 4. Response Time */}
+                    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-500">Response Speed</span>
+                        <div
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                            isFastResponse ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+                          }`}
+                        >
+                          <Clock className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <div
+                        className={`text-2xl font-extrabold ${
+                          isFastResponse ? 'text-emerald-700' : 'text-red-600'
                         }`}
                       >
-                        {range} Days
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* SVG Area Chart Graphic */}
-                <div className="w-full pt-4 overflow-hidden">
-                  <svg
-                    viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-                    className="w-full h-44 overflow-visible"
-                  >
-                    <defs>
-                      <linearGradient id="earningsGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#0F766E" stopOpacity="0.3" />
-                        <stop offset="100%" stopColor="#0F766E" stopOpacity="0.0" />
-                      </linearGradient>
-                    </defs>
-
-                    {/* Gradient fill */}
-                    <path d={areaD} fill="url(#earningsGradient)" />
-
-                    {/* Line stroke */}
-                    <path
-                      d={pathD}
-                      fill="none"
-                      stroke="#0F766E"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                    />
-
-                    {/* Data Points */}
-                    {pointsCoordinates.map((pt, idx) => (
-                      <g key={idx} className="group cursor-pointer">
-                        <circle
-                          cx={pt.x}
-                          cy={pt.y}
-                          r="5"
-                          className="fill-[#0F766E] stroke-white stroke-2 group-hover:r-7 transition-all"
-                        />
-                      </g>
-                    ))}
-                  </svg>
-
-                  {/* Matching X-Axis Labels */}
-                  <div className="flex items-center justify-between text-xs font-medium text-slate-400 px-2 pt-2 border-t border-slate-100">
-                    {chart.labels.map(lbl => (
-                      <span key={lbl}>{lbl}</span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* RECENT ORDERS & INQUIRIES CARD (NO MESSAGES) */}
-              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                  <div>
-                    <h3 className="text-base font-bold text-slate-900">
-                      Recent Orders & Inquiries
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      Active client milestone inquiries and orders awaiting delivery.
-                    </p>
-                  </div>
-
-                  <Link to="/orders">
-                    <Button variant="secondary" size="sm" className="inline-flex items-center gap-1">
-                      <span>See all orders</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </Button>
-                  </Link>
-                </div>
-
-                <div className="divide-y divide-slate-100">
-                  {recentOrders.map(order => (
-                    <div
-                      key={order.id}
-                      className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Avatar
-                          src={order.buyerAvatar}
-                          name={order.buyerName || 'Buyer'}
-                          size="sm"
-                        />
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-xs text-slate-900">
-                              {order.buyerName}
-                            </span>
-                            <StatusChip status={order.status} />
-                          </div>
-                          <div className="text-xs text-slate-600 line-clamp-1 mt-0.5">
-                            {order.listingTitle}
-                          </div>
-                        </div>
+                        {responseMinutes} min
                       </div>
-
-                      <div className="flex items-center justify-between sm:justify-end gap-4 pl-10 sm:pl-0">
-                        <div className="text-right">
-                          <div className="text-xs font-extrabold text-slate-900">
-                            ${order.amount.toFixed(2)}
-                          </div>
-                          <div className="text-[11px] text-slate-400">
-                            {new Date(order.createdAt).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </div>
-                        </div>
-
-                        <Link
-                          to={`/orders/${order.id}`}
-                          className="text-xs font-semibold text-[#0F766E] hover:underline inline-flex items-center gap-0.5"
-                        >
-                          <span>View</span>
-                          <ChevronRight className="w-3.5 h-3.5" />
-                        </Link>
+                      <div
+                        className={`inline-flex items-center gap-1 text-[11px] font-semibold ${
+                          isFastResponse ? 'text-emerald-600' : 'text-red-500'
+                        }`}
+                      >
+                        <span>● Fast response (Top 5%)</span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* YOUR ACTIVE LISTINGS TABLE */}
-              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <h3 className="text-base font-bold text-slate-900">Your Active Listings</h3>
-                    <p className="text-xs text-slate-500">
-                      Manage campus items, edit prices, pause availability, or create new listings.
-                    </p>
                   </div>
 
-                  {/* Search box */}
-                  <div className="relative w-full sm:w-60">
-                    <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="text"
-                      placeholder="Search listings..."
-                      value={listingSearch}
-                      onChange={e => setListingSearch(e.target.value)}
-                      className="w-full bg-slate-50 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-900 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20"
-                    />
-                  </div>
-                </div>
+                  {/* REVENUE INTERACTIVE SVG CHART */}
+                  <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                          Venture Revenue Trends
+                        </span>
+                        <div className="flex items-baseline gap-2 mt-0.5">
+                          <h3 className="text-2xl font-extrabold text-slate-900">{chart.total}</h3>
+                          <span className="text-xs font-bold text-emerald-600">{chart.change}</span>
+                        </div>
+                      </div>
 
-                {/* Table */}
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px] tracking-wider">
-                        <th className="pb-3 font-semibold">Listing</th>
-                        <th className="pb-3 font-semibold">Type</th>
-                        <th className="pb-3 font-semibold">Price</th>
-                        <th className="pb-3 font-semibold">Views</th>
-                        <th className="pb-3 font-semibold">Status</th>
-                        <th className="pb-3 font-semibold text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {filteredListings.length > 0 ? (
-                        filteredListings.map(listing => (
-                          <tr key={listing.id} className="hover:bg-slate-50/70 transition-colors">
-                            {/* Listing Thumbnail + Title */}
-                            <td className="py-3.5 pr-4">
-                              <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
-                                  <img
-                                    src={listing.images[0]}
-                                    alt={listing.title}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                                <div className="min-w-0 max-w-xs">
-                                  <Link
-                                    to={listing.type === 'service' ? `/service/${listing.id}` : `/product/${listing.id}`}
-                                    className="font-bold text-slate-900 hover:text-[#0F766E] truncate block"
-                                  >
-                                    {listing.title}
-                                  </Link>
-                                  <span className="text-[11px] text-slate-400">
+                      {/* Range Selector */}
+                      <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl self-start sm:self-auto">
+                        {(['7', '30', '90'] as const).map(range => (
+                          <button
+                            key={range}
+                            type="button"
+                            onClick={() => setChartRange(range)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                              chartRange === range
+                                ? 'bg-white text-[#0F766E] shadow-2xs font-bold'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            {range} Days
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="w-full pt-4 overflow-hidden">
+                      <svg
+                        viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+                        className="w-full h-44 overflow-visible"
+                      >
+                        <defs>
+                          <linearGradient id="earningsGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#0F766E" stopOpacity="0.3" />
+                            <stop offset="100%" stopColor="#0F766E" stopOpacity="0.0" />
+                          </linearGradient>
+                        </defs>
+
+                        <path d={areaD} fill="url(#earningsGradient)" />
+                        <path
+                          d={pathD}
+                          fill="none"
+                          stroke="#0F766E"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                        />
+
+                        {pointsCoordinates.map((pt, idx) => (
+                          <g key={idx} className="group cursor-pointer">
+                            <circle
+                              cx={pt.x}
+                              cy={pt.y}
+                              r="5"
+                              className="fill-[#0F766E] stroke-white stroke-2 group-hover:r-7 transition-all"
+                            />
+                          </g>
+                        ))}
+                      </svg>
+
+                      <div className="flex items-center justify-between text-xs font-medium text-slate-400 px-2 pt-2 border-t border-slate-100">
+                        {chart.labels.map(lbl => (
+                          <span key={lbl}>{lbl}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ACTIVE SERVICE OFFERINGS TABLE */}
+                  <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-base font-bold text-slate-900">Active Service Offerings</h3>
+                        <p className="text-xs text-slate-500">
+                          Manage startup offerings, edit tiered packages, or toggle availability.
+                        </p>
+                      </div>
+
+                      <div className="relative w-full sm:w-60">
+                        <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                          type="text"
+                          placeholder="Search services..."
+                          value={listingSearch}
+                          onChange={e => setListingSearch(e.target.value)}
+                          className="w-full bg-slate-50 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-900 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead>
+                          <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px] tracking-wider">
+                            <th className="pb-3 font-semibold">Service Offering</th>
+                            <th className="pb-3 font-semibold">Category</th>
+                            <th className="pb-3 font-semibold">Starting At</th>
+                            <th className="pb-3 font-semibold">Views</th>
+                            <th className="pb-3 font-semibold">Status</th>
+                            <th className="pb-3 font-semibold text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {filteredListings.length > 0 ? (
+                            filteredListings.map(listing => (
+                              <tr key={listing.id} className="hover:bg-slate-50/70 transition-colors">
+                                <td className="py-3.5 pr-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
+                                      <img
+                                        src={listing.images[0]}
+                                        alt={listing.title}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    </div>
+                                    <div className="min-w-0 max-w-xs">
+                                      <Link
+                                        to={`/service/${listing.id}`}
+                                        className="font-bold text-slate-900 hover:text-[#0F766E] truncate block"
+                                      >
+                                        {listing.title}
+                                      </Link>
+                                      <span className="text-[11px] text-slate-400">
+                                        {listing.startupName || currentUser.name}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </td>
+
+                                <td className="py-3.5">
+                                  <span className="capitalize px-2 py-0.5 rounded-full bg-teal-50 text-[#0F766E] font-medium">
                                     {listing.category}
                                   </span>
-                                </div>
-                              </div>
-                            </td>
+                                </td>
 
-                            {/* Type */}
-                            <td className="py-3.5">
-                              <span className="capitalize px-2 py-0.5 rounded-full bg-slate-100 font-medium text-slate-700">
-                                {listing.type}
-                              </span>
-                            </td>
+                                <td className="py-3.5 font-bold text-slate-900">
+                                  ${listing.basePrice.toFixed(2)}
+                                </td>
 
-                            {/* Price */}
-                            <td className="py-3.5 font-bold text-slate-900">
-                              ${listing.basePrice.toFixed(2)}
-                            </td>
+                                <td className="py-3.5 text-slate-600">
+                                  {listing.views}
+                                </td>
 
-                            {/* Views */}
-                            <td className="py-3.5 text-slate-600">
-                              {listing.views}
-                            </td>
+                                <td className="py-3.5">
+                                  <StatusChip status={listing.status} />
+                                </td>
 
-                            {/* Status Chip */}
-                            <td className="py-3.5">
-                              <StatusChip status={listing.status} />
-                            </td>
+                                <td className="py-3.5 text-right">
+                                  <div className="inline-flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleTogglePause(listing)}
+                                      className="p-1 text-slate-400 hover:text-slate-800 transition-colors"
+                                      title={listing.status === 'paused' ? 'Resume' : 'Pause'}
+                                    >
+                                      {listing.status === 'paused' ? (
+                                        <Play className="w-4 h-4 text-emerald-600" />
+                                      ) : (
+                                        <Pause className="w-4 h-4" />
+                                      )}
+                                    </button>
 
-                            {/* Actions: Edit, Pause, Delete */}
-                            <td className="py-3.5 text-right">
-                              <div className="inline-flex items-center gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => handleTogglePause(listing)}
-                                  className="p-1 text-slate-400 hover:text-slate-800 transition-colors"
-                                  title={listing.status === 'paused' ? 'Resume' : 'Pause'}
-                                >
-                                  {listing.status === 'paused' ? (
-                                    <Play className="w-4 h-4 text-emerald-600" />
-                                  ) : (
-                                    <Pause className="w-4 h-4" />
-                                  )}
-                                </button>
+                                    <Link
+                                      to="/sell"
+                                      className="p-1 text-slate-400 hover:text-[#0F766E] transition-colors"
+                                      title="Edit"
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                    </Link>
 
-                                <Link
-                                  to="/sell"
-                                  className="p-1 text-slate-400 hover:text-[#0F766E] transition-colors"
-                                  title="Edit"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </Link>
-
-                                <button
-                                  type="button"
-                                  onClick={() => handleDelete(listing.id)}
-                                  className="p-1 text-slate-400 hover:text-red-500 transition-colors"
-                                  title="Delete"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={6} className="py-8 text-center text-slate-400">
-                            No listings match your search.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDelete(listing.id)}
+                                      className="p-1 text-slate-400 hover:text-red-500 transition-colors"
+                                      title="Delete"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={6} className="py-8 text-center text-slate-400">
+                                No services found. Click "+ Post Service Offering" to list your first package.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
-          {/* TAB 2: MY LISTINGS (Detailed view) */}
+          {/* TAB 2: MY SERVICES (Founder detailed view) */}
           {activeNav === 'listings' && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-slate-900">All My Active Listings</h2>
+                <h2 className="text-lg font-bold text-slate-900">All Startup Service Offerings</h2>
                 <Link to="/sell">
                   <Button variant="primary" size="sm">
-                    + Add New Item
+                    + Post New Service
                   </Button>
                 </Link>
               </div>
@@ -840,7 +962,7 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between">
                       <StatusChip status={listing.status} />
                       <span className="font-extrabold text-sm text-[#0F766E]">
-                        ${listing.basePrice.toFixed(2)}
+                        From ${listing.basePrice.toFixed(2)}
                       </span>
                     </div>
                     <h4 className="font-bold text-sm text-slate-900 line-clamp-1">
@@ -870,7 +992,9 @@ export default function DashboardPage() {
           {activeNav === 'orders' && (
             <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-slate-900">Orders & Inquiries</h2>
+                <h2 className="text-lg font-bold text-slate-900">
+                  {userMode === 'seller' ? 'Client Orders Pipeline' : 'Hired Services & Orders'}
+                </h2>
                 <Link to="/orders">
                   <Button variant="secondary" size="sm">
                     Full Orders Pipeline
@@ -878,8 +1002,28 @@ export default function DashboardPage() {
                 </Link>
               </div>
               <p className="text-xs text-slate-500">
-                Manage your active inquiries and deliverables in the full orders pipeline.
+                {userMode === 'seller'
+                  ? 'Manage active client orders, fulfill milestones, and submit project deliverables.'
+                  : 'Track milestone progress, review files, and release payments.'}
               </p>
+
+              <div className="divide-y divide-slate-100 pt-2">
+                {orders.map(order => (
+                  <div key={order.id} className="py-4 flex items-center justify-between gap-4">
+                    <div>
+                      <div className="font-bold text-sm text-slate-900">{order.listingTitle}</div>
+                      <div className="text-xs text-slate-500 mt-0.5">
+                        Client: {order.buyerName} • Status: <StatusChip status={order.status} />
+                      </div>
+                    </div>
+                    <Link to={`/orders/${order.id}`}>
+                      <Button variant="secondary" size="sm">
+                        View Details
+                      </Button>
+                    </Link>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -889,7 +1033,7 @@ export default function DashboardPage() {
               <GraduationCap className="w-12 h-12 text-[#0F766E] mx-auto" />
               <h2 className="text-xl font-bold text-slate-900">Campus Student Hub</h2>
               <p className="text-xs text-slate-500 max-w-md mx-auto">
-                Connect with peers across verified student colleges, discover hackathons, and share trade tips.
+                Connect with peers across verified student colleges, discover campus events, and collaborate on tech projects.
               </p>
               <Link to="/community">
                 <Button variant="primary" size="md">
@@ -922,8 +1066,8 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* TAB 6: TEAM (For Startup Accounts) */}
-          {isStartupAccount && activeNav === 'team' && (
+          {/* TAB 6: TEAM (Founder Mode) */}
+          {userMode === 'seller' && activeNav === 'team' && (
             <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -942,7 +1086,7 @@ export default function DashboardPage() {
                   <Avatar src={currentUser.avatar} name={currentUser.name} size="md" />
                   <div>
                     <div className="font-bold text-sm text-slate-900">{currentUser.name}</div>
-                    <div className="text-xs text-[#0F766E] font-semibold">Founder & Lead</div>
+                    <div className="text-xs text-[#0F766E] font-semibold">Founder &amp; Lead</div>
                     <div className="text-[11px] text-slate-400">{currentUser.college}</div>
                   </div>
                 </div>
@@ -963,8 +1107,8 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* TAB 7: ANALYTICS (For Startup Accounts) */}
-          {isStartupAccount && activeNav === 'analytics' && (
+          {/* TAB 7: ANALYTICS (Founder Mode) */}
+          {userMode === 'seller' && activeNav === 'analytics' && (
             <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6">
               <h2 className="text-lg font-bold text-slate-900">Venture Conversion Analytics</h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -976,28 +1120,28 @@ export default function DashboardPage() {
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
                   <div className="text-xs text-slate-500">Avg Project Scope</div>
                   <div className="text-2xl font-extrabold text-slate-900 mt-1">$240.00</div>
-                  <div className="text-[11px] text-slate-400 mt-1">Fixed & custom quotes</div>
+                  <div className="text-[11px] text-slate-400 mt-1">Tier packages &amp; quotes</div>
                 </div>
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
                   <div className="text-xs text-slate-500">Client Retention</div>
                   <div className="text-2xl font-extrabold text-slate-900 mt-1">94%</div>
-                  <div className="text-[11px] text-emerald-600 font-semibold mt-1">Campus clubs & founders</div>
+                  <div className="text-[11px] text-emerald-600 font-semibold mt-1">Campus clubs &amp; founders</div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* TAB 8: LOOKING FOR (Startup Management View) */}
-          {activeNav === 'looking-for' && (
+          {/* TAB 8: LOOKING FOR (Founder Management View) */}
+          {userMode === 'seller' && activeNav === 'looking-for' && (
             <div className="space-y-6">
               <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                     <Handshake className="w-5 h-5 text-purple-600" />
-                    <span>Startup "Looking For" & Inquiries</span>
+                    <span>Startup "Looking For" &amp; Roles</span>
                   </h2>
                   <p className="text-xs text-slate-500 mt-1">
-                    Manage your open co-founder, designer, beta tester, and marketing collaborator requests.
+                    Manage your open co-founder, developer, designer, and collaborator needs.
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1013,7 +1157,7 @@ export default function DashboardPage() {
                     className="flex items-center gap-1.5 bg-teal-700 hover:bg-teal-800 text-white text-xs"
                   >
                     <PlusCircle size={14} />
-                    <span>+ Post Request</span>
+                    <span>+ Post Role Need</span>
                   </Button>
                 </div>
               </div>
@@ -1076,18 +1220,11 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Incoming Student Applications & Pitches */}
+              {/* Incoming Applications */}
               <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-bold text-sm text-slate-900">
-                      Incoming Student Pitches & Applications ({lookingForResponses.length})
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      Students across campuses responding to your requests.
-                    </p>
-                  </div>
-                </div>
+                <h3 className="font-bold text-sm text-slate-900">
+                  Incoming Student Applications ({lookingForResponses.length})
+                </h3>
 
                 <div className="space-y-3">
                   {lookingForResponses.length > 0 ? (
@@ -1121,13 +1258,11 @@ export default function DashboardPage() {
                           </span>
                         </div>
 
-                        {/* Pitch note */}
                         <div className="bg-white p-3 rounded-lg border border-slate-200/60 text-xs text-slate-700 leading-relaxed">
                           <span className="font-semibold text-slate-900 block mb-1">Pitch / Intro:</span>
                           "{res.roleOrPitch}"
                         </div>
 
-                        {/* Direct contact and portfolio links */}
                         <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
                           <div className="flex items-center gap-2">
                             {res.applicantWhatsapp && (
@@ -1158,18 +1293,16 @@ export default function DashboardPage() {
                             )}
                           </div>
 
-                          <div className="flex items-center gap-2">
-                            {res.status !== 'connected' && (
-                              <Button
-                                variant="primary"
-                                size="sm"
-                                onClick={() => updateLookingForResponseStatus(res.id, 'connected')}
-                                className="text-xs bg-teal-700 hover:bg-teal-800 text-white"
-                              >
-                                Mark Connected
-                              </Button>
-                            )}
-                          </div>
+                          {res.status !== 'connected' && (
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={() => updateLookingForResponseStatus(res.id, 'connected')}
+                              className="text-xs bg-teal-700 hover:bg-teal-800 text-white"
+                            >
+                              Mark Connected
+                            </Button>
+                          )}
                         </div>
                       </div>
                     ))
@@ -1183,7 +1316,7 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* TAB 9: MY COLLABS (Student / Buyer perspective) */}
+          {/* TAB 9: MY COLLABS (Buyer perspective) */}
           {activeNav === 'my-collabs' && (
             <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6">
               <div className="flex items-center justify-between">
@@ -1193,43 +1326,41 @@ export default function DashboardPage() {
                     <span>My Startup Collab Pitches</span>
                   </h2>
                   <p className="text-xs text-slate-500 mt-1">
-                    Opportunities you have pitched or connected with across student startups.
+                    Opportunities and teams you have pitched to across student ventures.
                   </p>
                 </div>
                 <Link to="/looking-for">
                   <Button variant="primary" size="sm" className="text-xs bg-teal-700 hover:bg-teal-800 text-white">
-                    Browse More Opportunities
+                    Browse Opportunities
                   </Button>
                 </Link>
               </div>
 
               <div className="space-y-3">
-                {lookingForResponses.filter(r => r.applicantId === currentUser.id).length > 0 ? (
-                  lookingForResponses
-                    .filter(r => r.applicantId === currentUser.id)
-                    .map(res => (
-                      <div
-                        key={res.id}
-                        className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-sm text-slate-900">{res.startupName}</span>
-                          <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            {res.status.toUpperCase()}
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-600 italic">"{res.roleOrPitch}"</p>
-                        <div className="text-[11px] text-slate-400">
-                          Submitted on {res.createdAt}
-                        </div>
+                {myCollabs.length > 0 ? (
+                  myCollabs.map(res => (
+                    <div
+                      key={res.id}
+                      className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-sm text-slate-900">{res.startupName}</span>
+                        <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          {res.status.toUpperCase()}
+                        </span>
                       </div>
-                    ))
+                      <p className="text-xs text-slate-600 italic">"{res.roleOrPitch}"</p>
+                      <div className="text-[11px] text-slate-400">
+                        Submitted on {res.createdAt}
+                      </div>
+                    </div>
+                  ))
                 ) : (
                   <div className="text-center py-12 space-y-3">
                     <Handshake className="w-10 h-10 text-slate-300 mx-auto" />
                     <h4 className="font-bold text-sm text-slate-900">No Applications Sent Yet</h4>
                     <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                      Explore startup requests for co-founders, clothing designers, beta testers, and marketing leads on our board.
+                      Explore startup requests for co-founders, UI designers, software engineers, and marketing leads on our board.
                     </p>
                     <Link to="/looking-for">
                       <Button variant="primary" size="sm" className="bg-teal-700 text-white text-xs">

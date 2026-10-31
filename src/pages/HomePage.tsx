@@ -3,9 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   Search,
   ArrowRight,
-  BookOpen,
-  Laptop,
-  Home as HomeIcon,
   GraduationCap,
   Palette,
   Code,
@@ -15,12 +12,14 @@ import {
   Music,
   CheckCircle2,
   Sparkles,
-  ShieldCheck,
-  Plus,
+  Briefcase,
   Handshake,
+  Plus,
+  LayoutDashboard,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
-import ProductCard from '@/components/ProductCard';
+import { useUserMode } from '@/hooks/useUserMode';
+import ServiceCard from '@/components/ServiceCard';
 import ServiceListCard from '@/components/ServiceListCard';
 import StartupCard from '@/components/StartupCard';
 import { LookingForCard } from '@/components/LookingForCard';
@@ -30,31 +29,31 @@ import { Button } from '@/components/ui/Button';
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const { listings, services, startups, lookingForRequests } = useApp();
+  const { services, startups, lookingForRequests } = useApp();
+  const { mode } = useUserMode();
 
-  const [activeSearchTab, setActiveSearchTab] = useState<'products' | 'services' | 'startups'>('products');
+  const [activeSearchTab, setActiveSearchTab] = useState<'services' | 'startups' | 'looking-for'>('services');
   const [searchQuery, setSearchQuery] = useState('');
   const [respondingRequest, setRespondingRequest] = useState<StartupLookingFor | null>(null);
 
   const categories = [
-    { name: 'Textbooks', icon: BookOpen, type: 'products', param: 'Textbooks' },
-    { name: 'Electronics', icon: Laptop, type: 'products', param: 'Electronics' },
-    { name: 'Dorm', icon: HomeIcon, type: 'products', param: 'Dorm' },
-    { name: 'Tutoring', icon: GraduationCap, type: 'services', param: 'Tutoring' },
-    { name: 'Design', icon: Palette, type: 'services', param: 'Design' },
-    { name: 'Development', icon: Code, type: 'services', param: 'Development' },
-    { name: 'Photography', icon: Camera, type: 'services', param: 'Photography' },
-    { name: 'Marketing', icon: TrendingUp, type: 'services', param: 'Marketing' },
-    { name: 'Moving', icon: Truck, type: 'services', param: 'Labor' },
-    { name: 'Music', icon: Music, type: 'services', param: 'Music' },
+    { name: 'Development', icon: Code, param: 'Development' },
+    { name: 'UI/UX Design', icon: Palette, param: 'Design' },
+    { name: 'Photo & Film', icon: Camera, param: 'Photography' },
+    { name: 'Marketing', icon: TrendingUp, param: 'Marketing' },
+    { name: 'Pitch Decks', icon: Sparkles, param: 'Pitch Decks' },
+    { name: 'STEM Tutoring', icon: GraduationCap, param: 'Tutoring' },
+    { name: 'Audio & Events', icon: Music, param: 'Music' },
+    { name: 'Campus Logistics', icon: Truck, param: 'Labor' },
   ];
 
   const popularChips = [
-    { label: 'Laptops', type: 'products', q: 'MacBook' },
-    { label: 'Textbooks', type: 'products', q: 'Calculus' },
-    { label: 'Tutoring', type: 'services', q: 'Tutoring' },
-    { label: 'Web Design', type: 'services', q: 'Design' },
-    { label: 'Roommates', type: 'products', q: 'Dorm' },
+    { label: 'Web Development', q: 'Development' },
+    { label: 'UI/UX Design', q: 'Design' },
+    { label: 'Pitch Deck Design', q: 'Pitch Deck' },
+    { label: 'Portrait Photography', q: 'Photography' },
+    { label: 'Social Media Growth', q: 'Marketing' },
+    { label: 'Python & Data Tutoring', q: 'Tutoring' },
   ];
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -65,15 +64,13 @@ export default function HomePage() {
     } else if (activeSearchTab === 'startups') {
       navigate(`/startups${query ? `?q=${encodeURIComponent(query)}` : ''}`);
     } else {
-      navigate(`/products${query ? `?q=${encodeURIComponent(query)}` : ''}`);
+      navigate(`/looking-for${query ? `?q=${encodeURIComponent(query)}` : ''}`);
     }
   };
 
-  // Filter products for the 2x2 grid (first 4 products)
-  const productItems = listings.filter(l => l.type === 'product').slice(0, 4);
-
-  // Filter trending services (first 4 services)
-  const trendingServices = (services.length > 0 ? services : listings.filter(l => l.type === 'service')).slice(0, 4);
+  // Top startup services
+  const featuredServices = services.slice(0, 4);
+  const fastTurnaroundServices = services.slice(4, 8).length > 0 ? services.slice(4, 8) : services.slice(0, 4);
 
   // Featured startups (first 3)
   const featuredStartups = startups.slice(0, 3);
@@ -85,32 +82,21 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-900 border border-amber-200 mb-6 shadow-2xs">
             <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            <span>The Campus Marketplace & Startup Hub</span>
+            <span>The Campus Startup Services &amp; Talent Hub</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.15] max-w-3xl mx-auto mb-4">
-            Buy, sell & hire talent on campus
+            Hire student startups &amp; collegiate talent
           </h1>
 
-          <p className="text-base sm:text-lg text-slate-500 max-w-2xl mx-auto mb-8 font-normal leading-relaxed">
-            The safest place for students and student startups to trade goods and offer services.
+          <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto mb-8 font-normal leading-relaxed">
+            The dedicated marketplace for verified campus-founded tech agencies, creative studios, marketing collectives, and student specialists.
           </p>
 
           {/* Centered Search Widget */}
           <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-md border border-slate-200 p-2 sm:p-2.5 mb-5 text-left">
             {/* Search Type Tabs */}
             <div className="flex items-center gap-1.5 border-b border-slate-100 pb-2 mb-2 px-2">
-              <button
-                type="button"
-                onClick={() => setActiveSearchTab('products')}
-                className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors ${
-                  activeSearchTab === 'products'
-                    ? 'bg-[#0F766E] text-white shadow-xs'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                Products
-              </button>
               <button
                 type="button"
                 onClick={() => setActiveSearchTab('services')}
@@ -120,7 +106,7 @@ export default function HomePage() {
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
-                Services
+                Startup Services
               </button>
               <button
                 type="button"
@@ -131,7 +117,18 @@ export default function HomePage() {
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
-                Startups
+                Campus Startups
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveSearchTab('looking-for')}
+                className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors ${
+                  activeSearchTab === 'looking-for'
+                    ? 'bg-[#0F766E] text-white shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                Looking For (Collabs)
               </button>
             </div>
 
@@ -145,10 +142,10 @@ export default function HomePage() {
                   onChange={e => setSearchQuery(e.target.value)}
                   placeholder={
                     activeSearchTab === 'services'
-                      ? 'Search tutoring, design, web dev, photography...'
+                      ? 'Search web development, UI/UX design, portrait photo, pitch decks...'
                       : activeSearchTab === 'startups'
                       ? 'Search student-founded ventures, agencies, labs...'
-                      : 'What are you looking for?'
+                      : 'Search co-founder roles, designers, marketing collaborators...'
                   }
                   className="w-full bg-transparent pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
                 />
@@ -167,13 +164,7 @@ export default function HomePage() {
               <button
                 key={chip.label}
                 type="button"
-                onClick={() => {
-                  if (chip.type === 'services') {
-                    navigate(`/services?q=${encodeURIComponent(chip.q)}`);
-                  } else {
-                    navigate(`/products?q=${encodeURIComponent(chip.q)}`);
-                  }
-                }}
+                onClick={() => navigate(`/services?q=${encodeURIComponent(chip.q)}`)}
                 className="px-2.5 py-1 rounded-full bg-white border border-slate-200 text-slate-600 hover:border-teal-400 hover:text-[#0F766E] hover:bg-teal-50/50 transition-all cursor-pointer font-medium"
               >
                 {chip.label}
@@ -181,18 +172,35 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* Two CTAs */}
+          {/* Mode-Aware CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link to="/products">
-              <Button variant="primary" size="lg" rightIcon={<ArrowRight className="w-4 h-4" />}>
-                Explore marketplace
-              </Button>
-            </Link>
-            <Link to="/sell">
-              <Button variant="secondary" size="lg" leftIcon={<Plus className="w-4 h-4" />}>
-                Start selling
-              </Button>
-            </Link>
+            {mode === 'buyer' ? (
+              <>
+                <Link to="/services">
+                  <Button variant="primary" size="lg" rightIcon={<ArrowRight className="w-4 h-4" />}>
+                    Browse Startup Services
+                  </Button>
+                </Link>
+                <Link to="/startups">
+                  <Button variant="secondary" size="lg" leftIcon={<Briefcase className="w-4 h-4 text-[#0F766E]" />}>
+                    Explore Campus Startups
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/sell">
+                  <Button variant="primary" size="lg" leftIcon={<Plus className="w-4 h-4" />}>
+                    + Post a Startup Service
+                  </Button>
+                </Link>
+                <Link to="/dashboard">
+                  <Button variant="secondary" size="lg" leftIcon={<LayoutDashboard className="w-4 h-4 text-[#0F766E]" />}>
+                    Founder Command Center
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -203,7 +211,7 @@ export default function HomePage() {
           {categories.map(cat => (
             <Link
               key={cat.name}
-              to={cat.type === 'services' ? `/services?category=${cat.param}` : `/products?category=${cat.param}`}
+              to={`/services?category=${cat.param}`}
               className="group flex flex-col items-center justify-center min-w-[5.25rem] p-3 rounded-xl bg-white border border-slate-200 hover:border-[#0F766E] hover:bg-teal-50/30 hover:-translate-y-0.5 transition-all duration-150 shadow-2xs shrink-0"
             >
               <div className="w-10 h-10 rounded-lg bg-teal-50 group-hover:bg-[#0F766E] flex items-center justify-center text-[#0F766E] group-hover:text-white transition-colors mb-1.5">
@@ -227,7 +235,7 @@ export default function HomePage() {
               </span>
             </div>
             <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-              Featured Startups
+              Featured Campus Startups
             </h2>
           </div>
           <Link
@@ -259,7 +267,7 @@ export default function HomePage() {
                 Startups Are Looking For...
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-xl">
-                Early-stage campus ventures actively seeking co-founders, clothing designers, beta testers, and marketing collaborators.
+                Early-stage campus ventures actively seeking co-founders, UI designers, software engineers, and marketing collaborators.
               </p>
             </div>
             <Link
@@ -283,48 +291,53 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 4. TWO-COLUMN BLOCK: FEATURED PRODUCTS | TRENDING SERVICES */}
+      {/* 4. TOP STARTUP SERVICES SHOWCASE (Replacing old product grid) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left Column: Featured Products (2x2 Grid) */}
-          <div className="lg:col-span-7">
+          {/* Left Column: Top Services (Grid) */}
+          <div className="lg:col-span-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                Featured Products
-              </h2>
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-teal-700">
+                  Client Deliverables
+                </span>
+                <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                  Top Campus Startup Services
+                </h2>
+              </div>
               <Link
-                to="/products"
+                to="/services"
                 className="text-xs font-semibold text-[#0F766E] hover:underline inline-flex items-center gap-1"
               >
-                <span>View all</span>
+                <span>View all services</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {productItems.map(product => (
-                <ProductCard key={product.id} product={product} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {featuredServices.map(service => (
+                <ServiceCard key={service.id} service={service} />
               ))}
             </div>
           </div>
 
-          {/* Right Column: Trending Services (Stacked List Cards) */}
-          <div className="lg:col-span-5">
+          {/* Right Column: Trending Quick Services (Stacked List Cards) */}
+          <div className="lg:col-span-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                Trending Services
+                Fast Turnaround
               </h2>
               <Link
                 to="/services"
                 className="text-xs font-semibold text-[#0F766E] hover:underline inline-flex items-center gap-1"
               >
-                <span>View all</span>
+                <span>Browse</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
             <div className="space-y-3">
-              {trendingServices.map(service => (
+              {fastTurnaroundServices.map(service => (
                 <ServiceListCard key={service.id} service={service} />
               ))}
             </div>
@@ -332,17 +345,17 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 5. HOW IT WORKS (3 Steps) */}
+      {/* 5. HOW IT WORKS (3 Steps for Services) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="text-center max-w-xl mx-auto mb-10">
           <span className="text-xs font-bold uppercase tracking-wider text-amber-600 mb-1 block">
-            Simple & Transparent
+            Simple &amp; Transparent
           </span>
           <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-            How It Works
+            How Campus Services Work
           </h2>
           <p className="text-sm text-slate-500 mt-2">
-            Campus commerce made safe, direct, and completely free of hidden middlemen.
+            Professional student work delivered safely with milestone transparency and zero commission middleman fees.
           </p>
         </div>
 
@@ -351,9 +364,9 @@ export default function HomePage() {
             <div className="w-12 h-12 rounded-2xl bg-teal-50 text-[#0F766E] font-bold text-lg flex items-center justify-center mx-auto mb-4 border border-teal-100">
               1
             </div>
-            <h3 className="font-bold text-base text-slate-900 mb-1.5">Post</h3>
+            <h3 className="font-bold text-base text-slate-900 mb-1.5">Discover &amp; Select</h3>
             <p className="text-xs text-slate-500 leading-relaxed">
-              List products you want to sell or professional services you provide in under 60 seconds.
+              Browse student startups and compare transparent tiered packages with clear turnaround times and portfolio samples.
             </p>
           </div>
 
@@ -361,9 +374,9 @@ export default function HomePage() {
             <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 font-bold text-lg flex items-center justify-center mx-auto mb-4 border border-amber-100">
               2
             </div>
-            <h3 className="font-bold text-base text-slate-900 mb-1.5">Connect</h3>
+            <h3 className="font-bold text-base text-slate-900 mb-1.5">Order or Custom Quote</h3>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Buyers and clients reach out directly via verified WhatsApp, email, or order inquiry forms.
+              Hire an established package directly or request a tailored scope via verified WhatsApp, email, or order notes.
             </p>
           </div>
 
@@ -371,15 +384,15 @@ export default function HomePage() {
             <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 font-bold text-lg flex items-center justify-center mx-auto mb-4 border border-indigo-100">
               3
             </div>
-            <h3 className="font-bold text-base text-slate-900 mb-1.5">Get It Done</h3>
+            <h3 className="font-bold text-base text-slate-900 mb-1.5">Track &amp; Deliver</h3>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Meet up in trusted public campus locations or deliver work digitally with timeline tracking.
+              Follow project progress step-by-step, review deliverables, and leave verified campus reviews for the venture.
             </p>
           </div>
         </div>
       </section>
 
-      {/* 6. JOIN THE COMMUNITY BLOCK (Amber eyebrow, Image left, Text right) */}
+      {/* 6. JOIN THE COMMUNITY BLOCK */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-10 lg:p-12 shadow-sm overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
@@ -397,15 +410,15 @@ export default function HomePage() {
             {/* Text Right */}
             <div className="lg:col-span-6 space-y-5">
               <span className="text-xs font-bold uppercase tracking-wider text-amber-600 block">
-                JOIN THE COMMUNITY
+                CAMPUS STARTUP NETWORK
               </span>
 
               <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                More than a marketplace — it's your campus network
+                Empowering the next generation of collegiate founders
               </h2>
 
               <p className="text-sm text-slate-600 leading-relaxed">
-                Connect with verified students and student-founded startups to buy, sell, and exchange skills. Every listing is backed by our campus peer review system so you can trade with confidence.
+                Connect with verified student founders and creative agencies. Build real-world client experience, get hired by student organizations, and grow your campus venture.
               </p>
 
               {/* Checklist */}
@@ -414,28 +427,28 @@ export default function HomePage() {
                   <div className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-200">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                   </div>
-                  <span>Verified student accounts &amp; verified startups</span>
+                  <span>Verified university student ventures &amp; agencies</span>
                 </div>
 
                 <div className="flex items-center gap-3 text-sm text-slate-700 font-medium">
                   <div className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-200">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                   </div>
-                  <span>Secure orders, custom quotes &amp; verified reviews</span>
+                  <span>Direct founder communication &amp; custom service proposals</span>
                 </div>
 
                 <div className="flex items-center gap-3 text-sm text-slate-700 font-medium">
                   <div className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-200">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                   </div>
-                  <span>Zero fees for students (startups pay a small fee)</span>
+                  <span>Zero middleman commission cuts for campus hires</span>
                 </div>
               </div>
 
               <div className="pt-3">
                 <Link to="/join">
                   <Button variant="primary" size="md">
-                    Get Started Free
+                    Join Campus Network
                   </Button>
                 </Link>
               </div>
@@ -449,28 +462,55 @@ export default function HomePage() {
         <div className="bg-[#0F766E] rounded-2xl p-8 sm:p-12 text-center text-white relative overflow-hidden shadow-lg">
           <div className="relative z-10 max-w-2xl mx-auto space-y-4">
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Got something to sell or a skill to share?
+              {mode === 'buyer'
+                ? 'Ready to get your project built by top student talent?'
+                : 'Run a campus startup or freelance agency?'}
             </h2>
             <p className="text-sm sm:text-base text-teal-100 font-normal leading-relaxed">
-              Post your first ad in under a minute and reach thousands of students on campus today.
+              {mode === 'buyer'
+                ? 'Browse hundreds of verified services or post a collaboration request on the Looking For board.'
+                : 'List your service offerings in minutes and start receiving direct inquiries from campus clients.'}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
-              <Link to="/sell">
-                <button
-                  type="button"
-                  className="w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold text-sm bg-white text-[#0F766E] hover:bg-teal-50 transition-colors shadow-sm"
-                >
-                  Create Listing
-                </button>
-              </Link>
-              <Link to="/products">
-                <button
-                  type="button"
-                  className="w-full sm:w-auto px-6 py-2.5 rounded-lg font-semibold text-sm border border-white text-white hover:bg-white/10 transition-colors"
-                >
-                  Browse Categories
-                </button>
-              </Link>
+              {mode === 'buyer' ? (
+                <>
+                  <Link to="/services">
+                    <button
+                      type="button"
+                      className="w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold text-sm bg-white text-[#0F766E] hover:bg-teal-50 transition-colors shadow-sm"
+                    >
+                      Browse Services
+                    </button>
+                  </Link>
+                  <Link to="/startups">
+                    <button
+                      type="button"
+                      className="w-full sm:w-auto px-6 py-2.5 rounded-lg font-semibold text-sm border border-white text-white hover:bg-white/10 transition-colors"
+                    >
+                      Explore Startups
+                    </button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link to="/sell">
+                    <button
+                      type="button"
+                      className="w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold text-sm bg-white text-[#0F766E] hover:bg-teal-50 transition-colors shadow-sm"
+                    >
+                      + Post a Service Offering
+                    </button>
+                  </Link>
+                  <Link to="/dashboard">
+                    <button
+                      type="button"
+                      className="w-full sm:w-auto px-6 py-2.5 rounded-lg font-semibold text-sm border border-white text-white hover:bg-white/10 transition-colors"
+                    >
+                      Open Founder Dashboard
+                    </button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

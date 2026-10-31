@@ -1,41 +1,41 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Search as SearchIcon, Package, Users, FileText, Filter } from 'lucide-react';
+import { Search as SearchIcon, Briefcase, Building2, FileText } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
-import { CATEGORIES } from '@/data/types';
-import type { User } from '@/data/types';
-import ProductCard from '@/components/ProductCard';
-import UserCard from '@/components/UserCard';
+import ServiceCard from '@/components/ServiceCard';
+import StartupCard from '@/components/StartupCard';
 import PostCard from '@/components/PostCard';
-import VerifiedBadge from '@/components/VerifiedBadge';
 
-type Tab = 'all' | 'products' | 'sellers' | 'posts';
+type Tab = 'all' | 'services' | 'startups' | 'posts';
 
 export default function SearchPage() {
-  const { products, posts, searchProfiles } = useApp();
+  const { services, startups, posts } = useApp();
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
   const [inputValue, setInputValue] = useState(query);
   const [tab, setTab] = useState<Tab>('all');
-  const [matchedSellers, setMatchedSellers] = useState<User[]>([]);
 
   useEffect(() => {
-    if (query) {
-      searchProfiles(query).then(setMatchedSellers);
-    } else {
-      setMatchedSellers([]);
-    }
-  }, [query, searchProfiles]);
+    setInputValue(query);
+  }, [query]);
 
   const results = (() => {
     const q = query.toLowerCase();
-    if (!q) return { products: [] as typeof products, sellers: [] as User[], posts: [] as typeof posts };
+    if (!q) return { services: [], startups: [], posts: [] };
 
-    const matchedProducts = products.filter(p =>
-      p.title.toLowerCase().includes(q) ||
-      p.description.toLowerCase().includes(q) ||
-      p.category.toLowerCase().includes(q) ||
-      p.tags.some(t => t.includes(q))
+    const matchedServices = services.filter(s =>
+      s.title.toLowerCase().includes(q) ||
+      s.description.toLowerCase().includes(q) ||
+      s.category.toLowerCase().includes(q) ||
+      (s.startupName && s.startupName.toLowerCase().includes(q))
+    );
+
+    const matchedStartups = startups.filter(st =>
+      st.name.toLowerCase().includes(q) ||
+      st.tagline.toLowerCase().includes(q) ||
+      st.description.toLowerCase().includes(q) ||
+      st.category.toLowerCase().includes(q) ||
+      st.college.toLowerCase().includes(q)
     );
 
     const matchedPosts = posts.filter(p =>
@@ -43,16 +43,10 @@ export default function SearchPage() {
       p.authorName.toLowerCase().includes(q)
     );
 
-    const matchedCategories = CATEGORIES.filter(c => c.name.toLowerCase().includes(q));
-    if (matchedCategories.length > 0) {
-      const catNames = matchedCategories.map(c => c.name.toLowerCase());
-      matchedProducts.push(...products.filter(p => catNames.includes(p.category.toLowerCase()) && !matchedProducts.includes(p)));
-    }
-
-    return { products: matchedProducts, sellers: matchedSellers, posts: matchedPosts };
+    return { services: matchedServices, startups: matchedStartups, posts: matchedPosts };
   })();
 
-  const totalResults = results.products.length + results.sellers.length + results.posts.length;
+  const totalResults = results.services.length + results.startups.length + results.posts.length;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,8 +57,8 @@ export default function SearchPage() {
 
   const tabs: { key: Tab; label: string; count: number }[] = [
     { key: 'all', label: 'All', count: totalResults },
-    { key: 'products', label: 'Products', count: results.products.length },
-    { key: 'sellers', label: 'Sellers', count: results.sellers.length },
+    { key: 'services', label: 'Startup Services', count: results.services.length },
+    { key: 'startups', label: 'Campus Startups', count: results.startups.length },
     { key: 'posts', label: 'Posts', count: results.posts.length },
   ];
 
@@ -78,7 +72,7 @@ export default function SearchPage() {
             type="text"
             value={inputValue}
             onChange={e => setInputValue(e.target.value)}
-            placeholder="Search products, sellers, posts..."
+            placeholder="Search startup services, campus ventures, posts..."
             className="w-full bg-white border border-ink-200 rounded-2xl pl-12 pr-4 py-3.5 text-sm outline-none focus:border-brand-300 focus:ring-2 focus:ring-brand-100 transition-all shadow-soft"
             autoFocus
           />
@@ -109,45 +103,49 @@ export default function SearchPage() {
             <div className="text-center py-20 bg-white rounded-2xl border border-ink-100">
               <SearchIcon size={36} className="text-ink-300 mx-auto mb-4" />
               <h3 className="font-bold text-ink-700 mb-2">No results found</h3>
-              <p className="text-sm text-ink-400 mb-5">Try different keywords or check spelling.</p>
-              <Link to="/explore" className="inline-flex items-center px-4 py-2.5 bg-brand-600 text-white rounded-xl text-sm font-semibold">
-                Browse all products
+              <p className="text-sm text-ink-400 mb-5">Try different keywords like "Development", "Design", or "Photography".</p>
+              <Link to="/services" className="inline-flex items-center px-4 py-2.5 bg-[#0F766E] text-white rounded-xl text-sm font-semibold">
+                Browse all startup services
               </Link>
             </div>
           ) : (
             <div className="space-y-8">
-              {/* Products */}
-              {(tab === 'all' || tab === 'products') && results.products.length > 0 && (
+              {/* Services */}
+              {(tab === 'all' || tab === 'services') && results.services.length > 0 && (
                 <div>
                   <h2 className="font-bold text-lg text-ink-800 mb-4 flex items-center gap-2">
-                    <Package size={20} className="text-brand-600" /> Products
-                    {tab === 'all' && <span className="text-sm text-ink-400 font-normal">({results.products.length})</span>}
+                    <Briefcase size={20} className="text-[#0F766E]" /> Startup Services
+                    {tab === 'all' && <span className="text-sm text-ink-400 font-normal">({results.services.length})</span>}
                   </h2>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
-                    {(tab === 'products' ? results.products : results.products.slice(0, 4)).map(p => (
-                      <ProductCard key={p.id} product={p} />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {(tab === 'services' ? results.services : results.services.slice(0, 3)).map(s => (
+                      <ServiceCard key={s.id} service={s} />
                     ))}
                   </div>
-                  {tab === 'all' && results.products.length > 4 && (
-                    <button onClick={() => setTab('products')} className="mt-3 text-sm font-semibold text-brand-600">View all {results.products.length} products →</button>
+                  {tab === 'all' && results.services.length > 3 && (
+                    <button onClick={() => setTab('services')} className="mt-3 text-sm font-semibold text-[#0F766E]">
+                      View all {results.services.length} services →
+                    </button>
                   )}
                 </div>
               )}
 
-              {/* Sellers */}
-              {(tab === 'all' || tab === 'sellers') && results.sellers.length > 0 && (
+              {/* Startups */}
+              {(tab === 'all' || tab === 'startups') && results.startups.length > 0 && (
                 <div>
                   <h2 className="font-bold text-lg text-ink-800 mb-4 flex items-center gap-2">
-                    <Users size={20} className="text-brand-600" /> Sellers
-                    {tab === 'all' && <span className="text-sm text-ink-400 font-normal">({results.sellers.length})</span>}
+                    <Building2 size={20} className="text-[#0F766E]" /> Campus Startups
+                    {tab === 'all' && <span className="text-sm text-ink-400 font-normal">({results.startups.length})</span>}
                   </h2>
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {(tab === 'sellers' ? results.sellers : results.sellers.slice(0, 3)).map(u => (
-                      <UserCard key={u.id} user={u} />
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {(tab === 'startups' ? results.startups : results.startups.slice(0, 3)).map(st => (
+                      <StartupCard key={st.id} startup={st} />
                     ))}
                   </div>
-                  {tab === 'all' && results.sellers.length > 3 && (
-                    <button onClick={() => setTab('sellers')} className="mt-3 text-sm font-semibold text-brand-600">View all sellers →</button>
+                  {tab === 'all' && results.startups.length > 3 && (
+                    <button onClick={() => setTab('startups')} className="mt-3 text-sm font-semibold text-[#0F766E]">
+                      View all {results.startups.length} startups →
+                    </button>
                   )}
                 </div>
               )}
@@ -156,7 +154,7 @@ export default function SearchPage() {
               {(tab === 'all' || tab === 'posts') && results.posts.length > 0 && (
                 <div>
                   <h2 className="font-bold text-lg text-ink-800 mb-4 flex items-center gap-2">
-                    <FileText size={20} className="text-brand-600" /> Posts
+                    <FileText size={20} className="text-[#0F766E]" /> Community Posts
                     {tab === 'all' && <span className="text-sm text-ink-400 font-normal">({results.posts.length})</span>}
                   </h2>
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -175,13 +173,13 @@ export default function SearchPage() {
         <div className="text-center py-20">
           <SearchIcon size={40} className="text-ink-300 mx-auto mb-4" />
           <h3 className="font-bold text-ink-700 mb-2">Search AMPLOFY</h3>
-          <p className="text-sm text-ink-400">Find products, sellers, and posts from the student community.</p>
+          <p className="text-sm text-ink-400">Find startup services, student founders, and community posts.</p>
           <div className="flex flex-wrap justify-center gap-2 mt-6 max-w-md mx-auto">
-            {['bracelet', 'books', 'handmade', 'digital', 'photography', 'tote'].map(s => (
+            {['development', 'design', 'pitch deck', 'photography', 'marketing', 'tutoring'].map(s => (
               <button
                 key={s}
                 onClick={() => { setInputValue(s); setSearchParams({ q: s }); }}
-                className="px-3 py-1.5 bg-white border border-ink-200 rounded-full text-sm text-ink-600 hover:border-brand-300 hover:text-brand-600 transition-colors"
+                className="px-3 py-1.5 bg-white border border-ink-200 rounded-full text-sm text-ink-600 hover:border-[#0F766E] hover:text-[#0F766E] transition-colors"
               >
                 {s}
               </button>

@@ -4,9 +4,7 @@ import {
   Store,
   Search,
   Plus,
-  ChevronDown,
   LayoutDashboard,
-  Package,
   ShoppingBag,
   Settings,
   LogOut,
@@ -16,9 +14,9 @@ import {
   Sparkles,
   Briefcase,
   Users,
-  Compass,
-  GraduationCap,
   Handshake,
+  Rocket,
+  ArrowRight,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { Avatar } from '@/components/ui/Avatar';
@@ -26,25 +24,21 @@ import { Button } from '@/components/ui/Button';
 import { useUserMode } from '@/hooks/useUserMode';
 
 export default function Navbar() {
-  const { isAuthed, currentUser, signOut } = useApp();
-  const { mode, toggleMode } = useUserMode();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [marketplaceOpen, setMarketplaceOpen] = useState(false);
-  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-
   const navigate = useNavigate();
-  const marketplaceRef = useRef<HTMLDivElement>(null);
+  const { currentUser, isAuthed, signOut } = useApp();
+  const { mode, toggleMode, setMode } = useUserMode();
+
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
   const avatarRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdowns on click outside
+  // Close avatar dropdown when clicking outside
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (marketplaceRef.current && !marketplaceRef.current.contains(e.target as Node)) {
-        setMarketplaceOpen(false);
-      }
-      if (avatarRef.current && !avatarRef.current.contains(e.target as Node)) {
+    function handleClickOutside(event: MouseEvent) {
+      if (avatarRef.current && !avatarRef.current.contains(event.target as Node)) {
         setAvatarMenuOpen(false);
       }
     }
@@ -55,7 +49,7 @@ export default function Navbar() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(`/services?q=${encodeURIComponent(searchQuery.trim())}`);
       setMobileSearchOpen(false);
       setMobileMenuOpen(false);
     }
@@ -78,111 +72,142 @@ export default function Navbar() {
               <Store className="w-5 h-5" />
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-lg text-slate-900 tracking-tight leading-none">
-                AMPLOFY
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-lg text-slate-900 tracking-tight leading-none">
+                  AMPLOFY
+                </span>
+                <span className={`text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded-md ${
+                  mode === 'seller' ? 'bg-amber-100 text-amber-800' : 'bg-teal-50 text-[#0F766E]'
+                }`}>
+                  {mode === 'seller' ? 'Founder' : 'Marketplace'}
+                </span>
+              </div>
               <span className="text-[10px] font-medium text-slate-400 tracking-wider">
-                Find. Create. Belong.
+                Campus Startup Services
               </span>
             </div>
           </Link>
 
           {/* Desktop Navigation Items */}
           <nav className="hidden md:flex items-center gap-1">
-            {/* Marketplace Dropdown */}
-            <div className="relative" ref={marketplaceRef}>
-              <button
-                type="button"
-                onClick={() => setMarketplaceOpen(prev => !prev)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  marketplaceOpen
-                    ? 'bg-teal-50 text-[#0F766E]'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
-                aria-expanded={marketplaceOpen}
-              >
-                <span>Marketplace</span>
-                <ChevronDown
-                  className={`w-4 h-4 transition-transform duration-200 ${
-                    marketplaceOpen ? 'rotate-180 text-[#0F766E]' : 'text-slate-400'
-                  }`}
-                />
-              </button>
+            {mode === 'buyer' ? (
+              // ─── BUYER NAVIGATION LINKS ───
+              <>
+                <NavLink
+                  to="/services"
+                  className={({ isActive }) =>
+                    `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      isActive ? 'bg-teal-50 text-[#0F766E]' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    }`
+                  }
+                >
+                  <Briefcase className="w-4 h-4 text-[#0F766E]" />
+                  <span>Startup Services</span>
+                </NavLink>
 
-              {marketplaceOpen && (
-                <div className="absolute left-0 mt-1.5 w-60 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 z-50 animate-fade-in">
-                  <Link
-                    to="/products"
-                    onClick={() => setMarketplaceOpen(false)}
-                    className="flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50 transition-colors"
-                  >
-                    <div className="p-2 rounded-lg bg-teal-50 text-[#0F766E] shrink-0 mt-0.5">
-                      <ShoppingBag className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">Products</p>
-                      <p className="text-xs text-slate-500">Books, electronics, dorm gear & more</p>
-                    </div>
-                  </Link>
+                <NavLink
+                  to="/startups"
+                  className={({ isActive }) =>
+                    `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      isActive ? 'bg-teal-50 text-[#0F766E]' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    }`
+                  }
+                >
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <span>Startups</span>
+                </NavLink>
 
-                  <Link
-                    to="/services"
-                    onClick={() => setMarketplaceOpen(false)}
-                    className="flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50 transition-colors"
-                  >
-                    <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600 shrink-0 mt-0.5">
-                      <Briefcase className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">Services</p>
-                      <p className="text-xs text-slate-500">Tutoring, design, dev, photo & skills</p>
-                    </div>
-                  </Link>
-                </div>
-              )}
-            </div>
+                <NavLink
+                  to="/looking-for"
+                  className={({ isActive }) =>
+                    `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      isActive ? 'bg-teal-50 text-[#0F766E]' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    }`
+                  }
+                >
+                  <Handshake className="w-4 h-4 text-purple-600" />
+                  <span>Looking For</span>
+                  <span className="hidden xl:inline-block px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                    Collabs
+                  </span>
+                </NavLink>
 
-            {/* Startups */}
-            <NavLink
-              to="/startups"
-              className={({ isActive }) =>
-                `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive ? 'bg-teal-50 text-[#0F766E]' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`
-              }
-            >
-              <Sparkles className="w-4 h-4 text-amber-500" />
-              <span>Startups</span>
-            </NavLink>
+                <NavLink
+                  to="/community"
+                  className={({ isActive }) =>
+                    `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      isActive ? 'bg-teal-50 text-[#0F766E]' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    }`
+                  }
+                >
+                  <Users className="w-4 h-4 text-slate-400" />
+                  <span>Community</span>
+                </NavLink>
+              </>
+            ) : (
+              // ─── SELLER / FOUNDER NAVIGATION LINKS ───
+              <>
+                <NavLink
+                  to="/dashboard"
+                  className={({ isActive }) =>
+                    `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      isActive ? 'bg-amber-50 text-amber-900 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    }`
+                  }
+                >
+                  <LayoutDashboard className="w-4 h-4 text-amber-600" />
+                  <span>Dashboard</span>
+                </NavLink>
 
-            {/* Looking For (Startup Collabs) */}
-            <NavLink
-              to="/looking-for"
-              className={({ isActive }) =>
-                `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive ? 'bg-teal-50 text-[#0F766E]' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`
-              }
-            >
-              <Handshake className="w-4 h-4 text-purple-600" />
-              <span>Looking For</span>
-              <span className="hidden xl:inline-block px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                Collabs
-              </span>
-            </NavLink>
+                <NavLink
+                  to="/dashboard?tab=listings"
+                  className={({ isActive }) =>
+                    `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      isActive ? 'bg-amber-50 text-amber-900 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    }`
+                  }
+                >
+                  <Briefcase className="w-4 h-4 text-slate-500" />
+                  <span>My Services</span>
+                </NavLink>
 
-            {/* Community */}
-            <NavLink
-              to="/community"
-              className={({ isActive }) =>
-                `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive ? 'bg-teal-50 text-[#0F766E]' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`
-              }
-            >
-              <Users className="w-4 h-4 text-slate-400" />
-              <span>Community</span>
-            </NavLink>
+                <NavLink
+                  to="/orders"
+                  className={({ isActive }) =>
+                    `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      isActive ? 'bg-amber-50 text-amber-900 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    }`
+                  }
+                >
+                  <ShoppingBag className="w-4 h-4 text-slate-500" />
+                  <span>Client Orders</span>
+                </NavLink>
+
+                <NavLink
+                  to="/looking-for"
+                  className={({ isActive }) =>
+                    `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      isActive ? 'bg-amber-50 text-amber-900 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    }`
+                  }
+                >
+                  <Handshake className="w-4 h-4 text-purple-600" />
+                  <span>Looking For Board</span>
+                </NavLink>
+
+                <NavLink
+                  to="/startups"
+                  className={({ isActive }) =>
+                    `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      isActive ? 'bg-amber-50 text-amber-900 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    }`
+                  }
+                >
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <span>Directory</span>
+                </NavLink>
+              </>
+            )}
           </nav>
         </div>
 
@@ -195,7 +220,7 @@ export default function Navbar() {
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search products, services, campus startups..."
+                placeholder="Search startup services (dev, design, tutoring, photo)..."
                 className="w-full bg-slate-100 border border-transparent rounded-lg pl-9 pr-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 transition-all outline-none"
               />
             </div>
@@ -214,17 +239,43 @@ export default function Navbar() {
             <Search className="w-5 h-5" />
           </button>
 
-          {/* "+ Post" Button */}
-          <Link to="/sell">
-            <Button
-              variant="primary"
-              size="sm"
-              leftIcon={<Plus className="w-4 h-4" />}
-              className="hidden sm:inline-flex"
+          {/* Quick Mode Switcher Pill in Top Bar */}
+          {mode === 'buyer' ? (
+            <button
+              type="button"
+              onClick={toggleMode}
+              title="Switch to Startup Founder Mode to sell services"
+              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-amber-50 hover:text-amber-900 hover:border-amber-300 border border-slate-200 transition-all"
             >
-              Post
-            </Button>
-          </Link>
+              <Rocket className="w-3.5 h-3.5 text-amber-600" />
+              <span>Founder Mode</span>
+              <ArrowRight className="w-3 h-3 text-slate-400" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={toggleMode}
+              title="Switch back to Buyer Mode"
+              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 transition-all"
+            >
+              <Briefcase className="w-3.5 h-3.5 text-[#0F766E]" />
+              <span>Switch to Buyer Mode</span>
+            </button>
+          )}
+
+          {/* "+ Post Service" Button — ONLY VISIBLE IN SELLER/FOUNDER MODE */}
+          {mode === 'seller' && (
+            <Link to="/sell">
+              <Button
+                variant="primary"
+                size="sm"
+                leftIcon={<Plus className="w-4 h-4" />}
+                className="hidden sm:inline-flex bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold shadow-xs border border-amber-600/30"
+              >
+                + Post Service
+              </Button>
+            </Link>
+          )}
 
           {/* User Auth or Avatar Dropdown */}
           {isAuthed && currentUser ? (
@@ -245,7 +296,7 @@ export default function Navbar() {
 
               {/* Logged-in Avatar Menu */}
               {avatarMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-scale-in">
+                <div className="absolute right-0 mt-2 w-60 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-scale-in">
                   <div className="px-4 py-2 border-b border-slate-100">
                     <p className="text-sm font-bold text-slate-900 truncate">
                       {currentUser.name || 'Campus Member'}
@@ -253,66 +304,118 @@ export default function Navbar() {
                     <p className="text-xs text-slate-500 truncate">
                       {currentUser.campus || currentUser.username || 'Student'}
                     </p>
-                    <div className="mt-1.5 flex items-center justify-between">
-                      <span className="text-[11px] font-semibold text-slate-600">Active mode:</span>
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-50 text-[#0F766E] border border-teal-200">
-                        {mode === 'seller' ? 'Seller' : 'Buyer'}
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-[11px] font-semibold text-slate-500">Active mode:</span>
+                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                        mode === 'seller' ? 'bg-amber-50 text-amber-900 border-amber-200' : 'bg-teal-50 text-[#0F766E] border-teal-200'
+                      }`}>
+                        {mode === 'seller' ? '🚀 Startup Founder' : '🛍️ Buyer / Hire'}
                       </span>
                     </div>
                   </div>
 
                   <div className="py-1">
-                    <Link
-                      to="/dashboard"
-                      onClick={() => setAvatarMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                    >
-                      <LayoutDashboard className="w-4 h-4 text-slate-400" />
-                      <span>Dashboard</span>
-                    </Link>
-
-                    <Link
-                      to="/dashboard?tab=listings"
-                      onClick={() => setAvatarMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                    >
-                      <Package className="w-4 h-4 text-slate-400" />
-                      <span>My Listings</span>
-                    </Link>
-
-                    <Link
-                      to="/orders"
-                      onClick={() => setAvatarMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                    >
-                      <ShoppingBag className="w-4 h-4 text-slate-400" />
-                      <span>Orders</span>
-                    </Link>
+                    {mode === 'buyer' ? (
+                      // ─── BUYER MENU ITEMS (NO SELLER JUNK) ───
+                      <>
+                        <Link
+                          to="/orders"
+                          onClick={() => setAvatarMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                        >
+                          <ShoppingBag className="w-4 h-4 text-[#0F766E]" />
+                          <span>My Hires & Orders</span>
+                        </Link>
+                        <Link
+                          to="/services"
+                          onClick={() => setAvatarMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                        >
+                          <Briefcase className="w-4 h-4 text-slate-400" />
+                          <span>Browse Startup Services</span>
+                        </Link>
+                        <Link
+                          to="/dashboard?tab=my-collabs"
+                          onClick={() => setAvatarMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                        >
+                          <Handshake className="w-4 h-4 text-purple-600" />
+                          <span>My Collab Pitches</span>
+                        </Link>
+                      </>
+                    ) : (
+                      // ─── FOUNDER / SELLER MENU ITEMS ───
+                      <>
+                        <Link
+                          to="/dashboard"
+                          onClick={() => setAvatarMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                        >
+                          <LayoutDashboard className="w-4 h-4 text-amber-600" />
+                          <span>Founder Dashboard</span>
+                        </Link>
+                        <Link
+                          to="/dashboard?tab=listings"
+                          onClick={() => setAvatarMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                        >
+                          <Briefcase className="w-4 h-4 text-slate-400" />
+                          <span>Manage Services</span>
+                        </Link>
+                        <Link
+                          to="/orders"
+                          onClick={() => setAvatarMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                        >
+                          <ShoppingBag className="w-4 h-4 text-slate-400" />
+                          <span>Client Orders & Quotes</span>
+                        </Link>
+                        <Link
+                          to="/dashboard?tab=looking-for"
+                          onClick={() => setAvatarMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                        >
+                          <Handshake className="w-4 h-4 text-purple-600" />
+                          <span>Looking For Roles</span>
+                        </Link>
+                        <Link
+                          to="/sell"
+                          onClick={() => setAvatarMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-amber-700 hover:bg-amber-50"
+                        >
+                          <Plus className="w-4 h-4 text-amber-600" />
+                          <span>+ Create New Service</span>
+                        </Link>
+                      </>
+                    )}
 
                     <Link
                       to="/settings"
                       onClick={() => setAvatarMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                      className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 border-t border-slate-100 mt-1"
                     >
                       <Settings className="w-4 h-4 text-slate-400" />
                       <span>Settings</span>
                     </Link>
                   </div>
 
-                  <div className="py-1 border-t border-slate-100">
+                  {/* Mode Switcher Toggle Button */}
+                  <div className="py-1 border-t border-slate-100 bg-slate-50/60">
                     <button
                       type="button"
                       onClick={() => {
                         toggleMode();
                       }}
-                      className="w-full flex items-center justify-between px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 text-left"
+                      className="w-full flex items-center justify-between px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 text-left transition-colors"
                     >
                       <span className="flex items-center gap-2">
                         <Repeat className="w-4 h-4 text-slate-400" />
                         <span>Switch mode</span>
                       </span>
-                      <span className="text-[11px] font-bold text-[#0F766E]">
-                        {mode === 'buyer' ? 'Go to Seller' : 'Go to Buyer'}
+                      <span className={`text-[11px] font-bold ${
+                        mode === 'buyer' ? 'text-amber-700' : 'text-[#0F766E]'
+                      }`}>
+                        {mode === 'buyer' ? '→ Founder Mode' : '→ Buyer Mode'}
                       </span>
                     </button>
                   </div>
@@ -367,7 +470,7 @@ export default function Navbar() {
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search products, services, startups..."
+                placeholder="Search startup services..."
                 className="w-full bg-slate-100 border border-slate-200 rounded-lg pl-9 pr-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 focus:border-[#0F766E]"
                 autoFocus
               />
@@ -379,25 +482,36 @@ export default function Navbar() {
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-slate-200 bg-white px-4 py-4 space-y-3 animate-fade-in shadow-xl">
+          {/* Active Mode Banner in Mobile Menu */}
+          <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+            <div>
+              <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">Current View</span>
+              <span className="text-xs font-bold text-slate-900">
+                {mode === 'seller' ? '🚀 Startup Founder Mode' : '🛍️ Campus Buyer Mode'}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                toggleMode();
+              }}
+              className="px-2.5 py-1 text-xs font-bold rounded-lg bg-white border border-slate-300 text-slate-700 shadow-2xs hover:bg-slate-100"
+            >
+              Switch to {mode === 'buyer' ? 'Founder' : 'Buyer'}
+            </button>
+          </div>
+
           <div className="space-y-1">
             <p className="text-[11px] font-bold uppercase text-slate-400 tracking-wider px-2">
-              Marketplace
+              Explore Services
             </p>
-            <Link
-              to="/products"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              <ShoppingBag className="w-4 h-4 text-[#0F766E]" />
-              <span>Products</span>
-            </Link>
             <Link
               to="/services"
               onClick={() => setMobileMenuOpen(false)}
               className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
-              <Briefcase className="w-4 h-4 text-indigo-600" />
-              <span>Services</span>
+              <Briefcase className="w-4 h-4 text-[#0F766E]" />
+              <span>Startup Services Directory</span>
             </Link>
             <Link
               to="/startups"
@@ -405,7 +519,7 @@ export default function Navbar() {
               className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
               <Sparkles className="w-4 h-4 text-amber-500" />
-              <span>Startups</span>
+              <span>Campus Startups</span>
             </Link>
             <Link
               to="/looking-for"
@@ -417,7 +531,7 @@ export default function Navbar() {
                 <span>Looking For (Collabs)</span>
               </div>
               <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
-                Opportunities
+                Roles
               </span>
             </Link>
             <Link
@@ -430,46 +544,62 @@ export default function Navbar() {
             </Link>
           </div>
 
-          <div className="pt-2 border-t border-slate-100">
-            <Link
-              to="/sell"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-[#0F766E] text-white font-semibold text-sm shadow-sm"
-            >
-              <Plus className="w-4 h-4" />
-              <span>+ Post a Listing</span>
-            </Link>
-          </div>
+          {/* "+ Post Service" in Mobile Drawer ONLY IF IN SELLER MODE */}
+          {mode === 'seller' && (
+            <div className="pt-2 border-t border-slate-100">
+              <Link
+                to="/sell"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-amber-500 text-slate-950 font-bold text-sm shadow-sm"
+              >
+                <Plus className="w-4 h-4" />
+                <span>+ List a Startup Service</span>
+              </Link>
+            </div>
+          )}
 
           {isAuthed && currentUser && (
             <div className="pt-2 border-t border-slate-100 space-y-1">
               <p className="text-[11px] font-bold uppercase text-slate-400 tracking-wider px-2">
-                My Account ({mode === 'seller' ? 'Seller Mode' : 'Buyer Mode'})
+                {mode === 'seller' ? 'Founder Portal' : 'My Account'}
               </p>
-              <Link
-                to="/dashboard"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                <LayoutDashboard className="w-4 h-4 text-slate-400" />
-                <span>Dashboard</span>
-              </Link>
-              <Link
-                to="/dashboard?tab=listings"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                <Package className="w-4 h-4 text-slate-400" />
-                <span>My Listings</span>
-              </Link>
-              <Link
-                to="/orders"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                <ShoppingBag className="w-4 h-4 text-slate-400" />
-                <span>Orders</span>
-              </Link>
+              {mode === 'seller' ? (
+                <>
+                  <Link
+                    to="/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    <LayoutDashboard className="w-4 h-4 text-amber-600" />
+                    <span>Founder Dashboard</span>
+                  </Link>
+                  <Link
+                    to="/dashboard?tab=listings"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    <Briefcase className="w-4 h-4 text-slate-400" />
+                    <span>Manage Services</span>
+                  </Link>
+                  <Link
+                    to="/orders"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    <ShoppingBag className="w-4 h-4 text-slate-400" />
+                    <span>Client Orders</span>
+                  </Link>
+                </>
+              ) : (
+                <Link
+                  to="/orders"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  <ShoppingBag className="w-4 h-4 text-[#0F766E]" />
+                  <span>My Hired Services & Orders</span>
+                </Link>
+              )}
               <Link
                 to="/settings"
                 onClick={() => setMobileMenuOpen(false)}
@@ -478,22 +608,6 @@ export default function Navbar() {
                 <Settings className="w-4 h-4 text-slate-400" />
                 <span>Settings</span>
               </Link>
-              <button
-                type="button"
-                onClick={() => {
-                  toggleMode();
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                <span className="flex items-center gap-3">
-                  <Repeat className="w-4 h-4 text-slate-400" />
-                  <span>Switch mode</span>
-                </span>
-                <span className="text-xs font-bold text-[#0F766E]">
-                  {mode === 'buyer' ? 'Seller mode' : 'Buyer mode'}
-                </span>
-              </button>
               <button
                 type="button"
                 onClick={handleLogout}

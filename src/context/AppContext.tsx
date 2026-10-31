@@ -343,7 +343,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [authLoading, setAuthLoading] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<'none' | 'required' | 'pending' | 'verified' | 'failed' | 'expired'>('verified');
 
-  const [listings, setListings] = useState<Listing[]>(() => [...mockProducts, ...mockServices]);
+  const [listings, setListings] = useState<Listing[]>(() => mockServices);
   const [services, setServices] = useState<Listing[]>(() => mockServices);
   const [startups, setStartups] = useState<Startup[]>(() => mockStartups);
   const [orders, setOrders] = useState<Order[]>(() => mockOrders);

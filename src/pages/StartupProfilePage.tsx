@@ -26,7 +26,6 @@ import { Button } from '@/components/ui/Button';
 import { CategoryBadge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
 import ServiceCard from '@/components/ServiceCard';
-import ProductCard from '@/components/ProductCard';
 import ContactSellerModal from '@/components/ContactSellerModal';
 import OrderQuoteModal from '@/components/OrderQuoteModal';
 import { LookingForCard } from '@/components/LookingForCard';
@@ -248,7 +247,7 @@ export default function StartupProfilePage() {
   const { slug } = useParams<{ slug: string }>();
   const { startups, services, listings, reviews, lookingForRequests, updateLookingForRequest, currentUser } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'services' | 'products' | 'team' | 'portfolio' | 'reviews' | 'looking-for'>('services');
+  const [activeTab, setActiveTab] = useState<'services' | 'team' | 'portfolio' | 'reviews' | 'looking-for'>('services');
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isQuoteOpen, setIsQuoteOpen] = useState(false);
   const [respondingRequest, setRespondingRequest] = useState<StartupLookingFor | null>(null);
@@ -281,15 +280,6 @@ export default function StartupProfilePage() {
       s => s.startupId === startup.id || s.sellerId === startup.ownerId
     );
   }, [services, startup]);
-
-  // Filter startup products
-  const startupProducts = useMemo(() => {
-    return listings.filter(
-      l =>
-        l.type === 'product' &&
-        (l.startupId === startup.id || l.sellerId === startup.ownerId)
-    );
-  }, [listings, startup]);
 
   // Filter startup reviews
   const startupReviews = useMemo(() => {
@@ -498,21 +488,6 @@ export default function StartupProfilePage() {
             </button>
 
             <button
-              onClick={() => setActiveTab('products')}
-              className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-colors whitespace-nowrap flex items-center gap-2 ${
-                activeTab === 'products'
-                  ? 'bg-teal-50 text-[#0F766E]'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-              }`}
-            >
-              <Layers className="w-4 h-4" />
-              <span>Products</span>
-              <span className="text-xs px-1.5 py-0.5 rounded-full bg-slate-200/70 text-slate-700 font-bold">
-                {startupProducts.length}
-              </span>
-            </button>
-
-            <button
               onClick={() => setActiveTab('team')}
               className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-colors whitespace-nowrap flex items-center gap-2 ${
                 activeTab === 'team'
@@ -599,27 +574,6 @@ export default function StartupProfilePage() {
                   >
                     Request Custom Service Quote
                   </Button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* TAB 2: PRODUCTS */}
-          {activeTab === 'products' && (
-            <div>
-              {startupProducts.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {startupProducts.map(product => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
-              ) : (
-                <div className="bg-white rounded-xl border border-slate-200 p-12 text-center space-y-3">
-                  <Layers className="w-10 h-10 text-slate-300 mx-auto" />
-                  <h3 className="font-bold text-slate-800">No Physical Goods Listed</h3>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    This venture currently focuses exclusively on professional student services and digital packages.
-                  </p>
                 </div>
               )}
             </div>
