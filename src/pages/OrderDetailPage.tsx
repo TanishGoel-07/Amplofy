@@ -598,7 +598,7 @@ export default function OrderDetailPage() {
                   {order.listingType || 'Campus Service'}
                 </p>
                 <div className="text-xs font-extrabold text-[#0F766E]">
-                  ${order.amount.toFixed(2)}
+                  ${Number(order.amount || 0).toFixed(2)}
                 </div>
               </div>
             </div>
@@ -607,7 +607,7 @@ export default function OrderDetailPage() {
             <div className="space-y-2 text-xs border-t border-slate-100 pt-3">
               <div className="flex items-center justify-between text-slate-600">
                 <span>Agreed Price</span>
-                <span className="font-semibold text-slate-900">${order.amount.toFixed(2)}</span>
+                <span className="font-semibold text-slate-900">${Number(order.amount || 0).toFixed(2)}</span>
               </div>
               <div className="flex items-center justify-between text-slate-600">
                 <span>Platform Fee</span>
@@ -615,7 +615,7 @@ export default function OrderDetailPage() {
               </div>
               <div className="flex items-center justify-between font-bold text-slate-900 pt-2 border-t border-slate-100 text-sm">
                 <span>Total</span>
-                <span className="text-[#0F766E]">${order.amount.toFixed(2)}</span>
+                <span className="text-[#0F766E]">${Number(order.amount || 0).toFixed(2)}</span>
               </div>
             </div>
           </div>

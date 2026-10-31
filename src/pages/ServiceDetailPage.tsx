@@ -8,11 +8,8 @@ import {
   ShieldCheck,
   ChevronDown,
   MessageSquare,
-  Send,
   ArrowRight,
   Share2,
-  Calendar,
-  Lock,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { Avatar } from '@/components/ui/Avatar';
@@ -30,7 +27,7 @@ export default function ServiceDetailPage() {
   const queryId = searchParams.get('id');
   const serviceId = paramId || queryId;
 
-  const { services, listings, reviews } = useApp();
+  const { services, listings, reviews, startups } = useApp();
   const { toast } = useToast();
 
   const allServices = services.length > 0 ? services : listings.filter(l => l.type === 'service');
@@ -42,26 +39,25 @@ export default function ServiceDetailPage() {
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [orderModalOpen, setOrderModalOpen] = useState(false);
   const [orderModalMode, setOrderModalMode] = useState<'order' | 'quote'>('order');
-
-  // FAQ accordion open states
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
-  // Fallback default packages if none specified
+  // Safe fallback packages
   const packages: ServicePackage[] = useMemo(() => {
+    if (!service) return [];
     if (service.packages && service.packages.length > 0) {
       return service.packages;
     }
-    const base = service.basePrice || 35;
+    const base = Number(service.basePrice || service.price || 40);
     return [
       {
         id: `pkg-${service.id}-basic`,
         listingId: service.id,
         tier: 'basic',
-        title: 'Basic Service Starter',
+        title: 'Starter / Consultation',
         price: base,
         deliveryDays: service.deliveryDays || 1,
         revisions: 1,
-        features: ['Initial consultation & kickoff', 'Core deliverable delivery', '1 revision included'],
+        features: ['Initial consultation & kickoff', 'Core deliverable draft', '1 revision round included'],
       },
       {
         id: `pkg-${service.id}-standard`,
@@ -69,33 +65,67 @@ export default function ServiceDetailPage() {
         tier: 'standard',
         title: 'Standard Comprehensive Package',
         price: Math.round(base * 2.2),
-        deliveryDays: Math.min((service.deliveryDays || 1) * 3, 7),
-        revisions: 3,
-        features: ['Full project execution', 'Direct campus meetup or digital delivery', 'Source deliverables / notes included', '3 revisions included'],
+        deliveryDays: Math.min((service.deliveryDays || 1) * 3, 5),
+        revisions: 2,
+        features: ['Full production execution', 'Source deliverables & files included', '2 revision rounds included', 'Direct campus coordination'],
       },
       {
         id: `pkg-${service.id}-premium`,
         listingId: service.id,
         tier: 'premium',
-        title: 'Premium Master Suite',
-        price: Math.round(base * 4.5),
-        deliveryDays: Math.min((service.deliveryDays || 1) * 5, 14),
-        revisions: 6,
-        features: ['End-to-end priority fulfillment', 'Unlimited WhatsApp Q&A support', 'Extended post-delivery assistance', 'Priority rush turnaround'],
+        title: 'Enterprise / Full-Suite',
+        price: Math.round(base * 4.2),
+        deliveryDays: Math.min((service.deliveryDays || 1) * 5, 10),
+        revisions: 3,
+        features: ['End-to-end priority fulfillment', 'Unlimited project messaging support', 'Commercial license & IP rights transfer', 'Post-delivery follow-up'],
       },
     ];
   }, [service]);
 
-  const activePackage = packages.find(p => p.tier === selectedTier) || packages[0];
+  if (!service) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-16 text-center space-y-4">
+        <h2 className="text-2xl font-bold text-slate-900">Service Offering Not Found</h2>
+        <p className="text-sm text-slate-500">
+          The requested startup service offering does not exist or may have been updated.
+        </p>
+        <Link to="/services">
+          <Button variant="primary" size="md">
+            Browse All Startup Services
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
+  const activePackage = packages.find(p => p.tier === selectedTier) || packages[0] || {
+    id: 'pkg-default',
+    title: 'Standard Service Offering',
+    price: Number(service.basePrice || service.price || 45),
+    deliveryDays: service.deliveryDays || 3,
+    revisions: 2,
+    features: ['Standard Scope Delivery', 'Direct Founder Notes Tracking'],
+  };
+
+  const ratingVal = service.rating ? Number(service.rating) : 5.0;
+  const reviewCount = service.reviewCount ?? 0;
+  const serviceImages = (service.images && service.images.length > 0)
+    ? service.images
+    : ['https://images.pexels.com/photos/546819/pexels-photo-546819.jpeg?auto=compress&cs=tinysrgb&w=1200'];
+
+  const linkedStartup = startups.find(
+    st => st.id === service.startupId || st.name === service.startupName
+  );
+  const startupSlug = linkedStartup?.slug || service.startup?.slug || 'technexus-labs';
 
   const faqs = [
     {
       q: 'How does scheduling and delivery work?',
-      a: 'Once you place an inquiry or quote request, you and the provider coordinate directly on campus or via order notes. Deliverables can be provided in person or uploaded as digital files to order notes.',
+      a: 'Once you place an order or quote request, you and the provider coordinate directly on campus or via order notes. Deliverables can be provided in person or uploaded as digital files to order notes.',
     },
     {
       q: 'What if I need revisions on deliverables?',
-      a: `This package includes ${activePackage.revisions} revision rounds. You can request revisions directly on the Order page timeline after delivery.`,
+      a: `This package includes ${activePackage.revisions || 2} revision rounds. You can request revisions directly on the Order page timeline after delivery.`,
     },
     {
       q: 'Can I request a custom scope or budget?',
@@ -118,10 +148,10 @@ export default function ServiceDetailPage() {
   };
 
   const seller = service.seller || {
-    name: 'Campus Provider',
-    avatar: service.images[0],
-    department: service.ownerType === 'startup' ? 'Startup Agency' : 'Student Freelancer',
-    college: 'University Campus',
+    name: service.startupName || 'Campus Provider',
+    avatar: serviceImages[0],
+    department: service.ownerType === 'startup' ? 'Startup Agency' : 'Student Specialist',
+    college: service.location || 'University Campus',
     isVerified: true,
     accountType: service.ownerType === 'startup' ? 'startup' : 'student',
     showContact: true,
@@ -150,7 +180,7 @@ export default function ServiceDetailPage() {
           <div className="space-y-3">
             <div className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-sm">
               <img
-                src={service.images[activeImage] || 'https://images.pexels.com/photos/3771074/pexels-photo-3771074.jpeg?auto=compress&cs=tinysrgb&w=1200'}
+                src={serviceImages[activeImage] || serviceImages[0]}
                 alt={service.title}
                 className="w-full h-full object-cover"
               />
@@ -165,6 +195,26 @@ export default function ServiceDetailPage() {
                 </div>
               )}
             </div>
+
+            {/* Thumbnail selector */}
+            {serviceImages.length > 1 && (
+              <div className="flex gap-2.5 overflow-x-auto pb-1">
+                {serviceImages.map((img, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setActiveImage(idx)}
+                    className={`relative w-20 h-14 rounded-lg overflow-hidden border-2 shrink-0 transition-all ${
+                      activeImage === idx
+                        ? 'border-[#0F766E] shadow-sm'
+                        : 'border-slate-200 opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Title & Metadata */}
@@ -176,8 +226,8 @@ export default function ServiceDetailPage() {
             <div className="flex flex-wrap items-center gap-4 text-xs">
               <div className="flex items-center gap-1.5 font-bold text-slate-900">
                 <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
-                <span>{service.rating.toFixed(1)}</span>
-                <span className="text-slate-400 font-normal">({service.reviewCount} campus reviews)</span>
+                <span>{ratingVal.toFixed(1)}</span>
+                <span className="text-slate-400 font-normal">({reviewCount} campus reviews)</span>
               </div>
               <span className="text-slate-300">•</span>
               <div className="flex items-center gap-1 text-slate-500">
@@ -191,15 +241,15 @@ export default function ServiceDetailPage() {
             </div>
           </div>
 
-          {/* Seller Mini-Card */}
+          {/* Seller / Venture Mini-Card */}
           <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
             <div className="flex items-center gap-3.5">
               <Avatar
                 src={seller.avatar}
                 name={seller.name}
                 size="md"
-                verified={seller.isVerified}
                 isStartup={service.ownerType === 'startup'}
+                verified={seller.isVerified}
               />
               <div>
                 <div className="flex items-center gap-1.5">
@@ -216,9 +266,9 @@ export default function ServiceDetailPage() {
               </div>
             </div>
 
-            {service.ownerType === 'startup' && service.startupId ? (
+            {service.ownerType === 'startup' ? (
               <Link
-                to={`/startups/${service.startup?.slug || 'technexus-labs'}`}
+                to={`/startups/${startupSlug}`}
                 className="text-xs font-semibold text-[#0F766E] hover:underline"
               >
                 View Startup Profile →
@@ -229,137 +279,123 @@ export default function ServiceDetailPage() {
           {/* About this service */}
           <div className="space-y-3">
             <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider">
-              About This Service
+              About this Service
             </h2>
-            <div className="text-sm text-slate-600 leading-relaxed space-y-3 bg-white p-5 rounded-xl border border-slate-200">
-              <p>{service.description}</p>
-              <p>
-                Whether you need assistance preparing for exams, polishing your portfolio, creating digital assets, or building a startup project, this service is backed by peer reviews and verified campus credentials.
-              </p>
+            <div className="prose prose-sm text-slate-600 max-w-none leading-relaxed whitespace-pre-line">
+              {service.description}
             </div>
           </div>
 
-          {/* Package Selector Tabs (Basic / Standard / Premium) */}
-          <div className="space-y-4">
-            <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider">
-              Compare Packages
-            </h2>
-
-            {/* Tab Buttons */}
-            <div className="grid grid-cols-3 gap-2 p-1.5 bg-slate-100 rounded-xl">
-              {(['basic', 'standard', 'premium'] as const).map(tier => {
-                const pkg = packages.find(p => p.tier === tier);
-                const isActive = selectedTier === tier;
-                return (
-                  <button
-                    key={tier}
-                    type="button"
-                    onClick={() => setSelectedTier(tier)}
-                    className={`py-2 px-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                      isActive
-                        ? 'bg-white text-[#0F766E] shadow-sm'
-                        : 'text-slate-500 hover:text-slate-900'
-                    }`}
-                  >
-                    {tier} (${pkg?.price})
-                  </button>
-                );
-              })}
+          {/* 3 Package Tiers Comparison Table */}
+          <div className="space-y-4 pt-4 border-t border-slate-200">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider">
+                Compare Packages
+              </h2>
+              <span className="text-xs text-slate-400 font-medium">Select a tier to order</span>
             </div>
 
-            {/* Active Package Details Box */}
-            <div className="p-5 bg-white rounded-xl border border-slate-200 space-y-4">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="font-bold text-base text-slate-900">
-                    {activePackage.title}
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Tier: <span className="uppercase font-semibold text-[#0F766E]">{activePackage.tier}</span>
-                  </p>
-                </div>
-                <span className="text-2xl font-extrabold text-slate-900">
-                  ${activePackage.price}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-6 text-xs text-slate-600 font-medium pt-2 border-t border-slate-100">
-                <div className="flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-[#0F766E]" />
-                  <span>{activePackage.deliveryDays} Days Delivery</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <RotateCcw className="w-4 h-4 text-[#0F766E]" />
-                  <span>{activePackage.revisions} Revisions</span>
-                </div>
-              </div>
-
-              {/* Inclusions list */}
-              <div className="space-y-2 pt-2">
-                <p className="text-xs font-bold text-slate-700">What's Included:</p>
-                <ul className="space-y-1.5">
-                  {activePackage.features.map((feat, i) => (
-                    <li key={i} className="flex items-center gap-2 text-xs text-slate-600">
-                      <Check className="w-4 h-4 text-[#0F766E] shrink-0" />
-                      <span>{feat}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          {/* FAQ Accordion */}
-          <div className="space-y-3">
-            <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider">
-              Frequently Asked Questions
-            </h2>
-            <div className="space-y-2">
-              {faqs.map((faq, idx) => {
-                const isOpen = openFaq === idx;
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {packages.map(pkg => {
+                const isSelected = selectedTier === pkg.tier;
                 return (
                   <div
-                    key={idx}
-                    className="bg-white rounded-xl border border-slate-200 overflow-hidden"
+                    key={pkg.id || pkg.tier}
+                    onClick={() => pkg.tier && setSelectedTier(pkg.tier as 'basic' | 'standard' | 'premium')}
+                    className={`rounded-2xl border p-5 cursor-pointer transition-all ${
+                      isSelected
+                        ? 'border-[#0F766E] ring-2 ring-[#0F766E]/20 bg-teal-50/20 shadow-sm'
+                        : 'border-slate-200 bg-white hover:border-slate-300'
+                    }`}
                   >
-                    <button
-                      type="button"
-                      onClick={() => setOpenFaq(isOpen ? null : idx)}
-                      className="w-full flex items-center justify-between p-4 text-left font-semibold text-xs text-slate-900 hover:bg-slate-50 transition-colors"
-                    >
-                      <span>{faq.q}</span>
-                      <ChevronDown
-                        className={`w-4 h-4 text-slate-400 transition-transform ${
-                          isOpen ? 'rotate-180 text-[#0F766E]' : ''
-                        }`}
-                      />
-                    </button>
-                    {isOpen && (
-                      <div className="p-4 pt-0 text-xs text-slate-600 leading-relaxed border-t border-slate-50">
-                        {faq.a}
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                        {pkg.tier || 'Package'}
+                      </span>
+                      {pkg.tier === 'standard' && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#0F766E] text-white">
+                          Popular
+                        </span>
+                      )}
+                    </div>
+
+                    <h3 className="font-bold text-slate-900 text-sm mb-1">{pkg.title}</h3>
+                    <div className="text-2xl font-extrabold text-slate-900 mb-3">
+                      ${pkg.price}
+                    </div>
+
+                    <div className="space-y-2 text-xs text-slate-600 mb-4 pb-4 border-b border-slate-100">
+                      <div className="flex items-center gap-1.5 font-medium">
+                        <Clock className="w-3.5 h-3.5 text-[#0F766E]" />
+                        <span>{pkg.deliveryDays} Days Turnaround</span>
                       </div>
-                    )}
+                      <div className="flex items-center gap-1.5 font-medium">
+                        <RotateCcw className="w-3.5 h-3.5 text-[#0F766E]" />
+                        <span>{pkg.revisions} Revisions Included</span>
+                      </div>
+                    </div>
+
+                    <ul className="space-y-2 text-xs text-slate-600">
+                      {pkg.features?.map((feat, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <Check className="w-3.5 h-3.5 text-teal-600 shrink-0 mt-0.5" />
+                          <span>{feat}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 );
               })}
             </div>
           </div>
 
-          {/* Reviews Breakdown & List */}
-          <div className="space-y-4">
+          {/* FAQs Accordion */}
+          <div className="space-y-4 pt-4 border-t border-slate-200">
+            <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider">
+              Frequently Asked Questions
+            </h2>
+            <div className="space-y-2">
+              {faqs.map((faq, idx) => (
+                <div
+                  key={idx}
+                  className="rounded-xl border border-slate-200 overflow-hidden bg-white"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                    className="w-full p-4 flex items-center justify-between text-left text-xs sm:text-sm font-semibold text-slate-900 hover:bg-slate-50 transition-colors"
+                  >
+                    <span>{faq.q}</span>
+                    <ChevronDown
+                      className={`w-4 h-4 text-slate-400 transition-transform ${
+                        openFaq === idx ? 'rotate-180 text-[#0F766E]' : ''
+                      }`}
+                    />
+                  </button>
+                  {openFaq === idx && (
+                    <div className="px-4 pb-4 text-xs text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+                      {faq.a}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Client Reviews Section */}
+          <div className="space-y-6 pt-6 border-t border-slate-200">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider">
                 Student &amp; Client Reviews
               </h2>
               <span className="text-xs text-slate-500 font-semibold">
-                {service.reviewCount} total reviews
+                {reviewCount} total reviews
               </span>
             </div>
 
-            {/* Rating breakdown summary */}
             <div className="p-5 bg-white rounded-xl border border-slate-200 flex flex-col sm:flex-row items-center gap-6">
               <div className="text-center sm:border-r sm:border-slate-100 sm:pr-6 shrink-0">
-                <span className="text-4xl font-extrabold text-slate-900">{service.rating.toFixed(1)}</span>
+                <span className="text-4xl font-extrabold text-slate-900">{ratingVal.toFixed(1)}</span>
                 <div className="flex items-center justify-center gap-1 my-1">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star key={i} className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
@@ -368,7 +404,6 @@ export default function ServiceDetailPage() {
                 <span className="text-[11px] text-slate-400">Campus Rating</span>
               </div>
 
-              {/* Progress bars */}
               <div className="w-full space-y-1.5 text-xs text-slate-600">
                 {[
                   { stars: 5, pct: '92%' },
@@ -378,30 +413,29 @@ export default function ServiceDetailPage() {
                   { stars: 1, pct: '0%' },
                 ].map(r => (
                   <div key={r.stars} className="flex items-center gap-2">
-                    <span className="w-12 text-slate-500">{r.stars} stars</span>
-                    <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <span className="w-12 text-slate-400">{r.stars} stars</span>
+                    <div className="h-2 flex-1 bg-slate-100 rounded-full overflow-hidden">
                       <div className="h-full bg-amber-400 rounded-full" style={{ width: r.pct }} />
                     </div>
-                    <span className="w-8 text-right text-[11px] text-slate-400">{r.pct}</span>
+                    <span className="w-8 text-right text-slate-400">{r.pct}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Review List */}
             <div className="space-y-3">
               {serviceReviews.map(rev => (
                 <div key={rev.id} className="p-4 bg-white rounded-xl border border-slate-200 space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Avatar src={rev.reviewerAvatar} name={rev.reviewerName} size="xs" />
-                      <span className="text-xs font-bold text-slate-900">{rev.reviewerName}</span>
+                      <span className="font-bold text-xs text-slate-900">{rev.reviewerName}</span>
                     </div>
                     <span className="text-[11px] text-slate-400">{rev.createdAt}</span>
                   </div>
                   <div className="flex items-center gap-0.5">
                     {Array.from({ length: rev.rating }).map((_, i) => (
-                      <Star key={i} className="w-3 h-3 fill-amber-500 text-amber-500" />
+                      <Star key={i} className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
                     ))}
                   </div>
                   <p className="text-xs text-slate-600 leading-relaxed">{rev.comment}</p>
@@ -425,14 +459,14 @@ export default function ServiceDetailPage() {
           )}
         </div>
 
-        {/* Right Sticky Order Card (NO save/favourite button) */}
+        {/* Right Sticky Order Card */}
         <div className="lg:col-span-4 sticky top-20">
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-md space-y-5">
             {/* Header: Selected Tier & Price */}
             <div>
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-bold uppercase tracking-wider text-[#0F766E]">
-                  {activePackage.tier} Tier
+                  {activePackage.tier || 'Selected'} Tier
                 </span>
                 <button
                   type="button"
@@ -470,7 +504,6 @@ export default function ServiceDetailPage() {
 
             {/* Primary Action Buttons */}
             <div className="space-y-2.5 pt-1">
-              {/* Place Order Button */}
               <Button
                 variant="primary"
                 size="lg"
@@ -480,10 +513,9 @@ export default function ServiceDetailPage() {
                   setOrderModalOpen(true);
                 }}
               >
-                Place order
+                Place order (${activePackage.price})
               </Button>
 
-              {/* Request Custom Quote */}
               <Button
                 variant="secondary"
                 size="md"
@@ -496,7 +528,6 @@ export default function ServiceDetailPage() {
                 Request custom quote
               </Button>
 
-              {/* Contact Seller Button */}
               <Button
                 variant="ghost"
                 size="md"
@@ -512,7 +543,7 @@ export default function ServiceDetailPage() {
             <div className="pt-4 border-t border-slate-100 space-y-2 text-xs text-slate-500">
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Verified student / startup account</span>
+                <span>Verified student / startup venture</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -520,7 +551,7 @@ export default function ServiceDetailPage() {
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Zero fees for students</span>
+                <span>Zero commission middleman fees</span>
               </div>
             </div>
           </div>

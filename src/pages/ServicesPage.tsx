@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Navigate } from 'react-router-dom';
 import {
   SlidersHorizontal,
   X,
@@ -37,6 +37,11 @@ const CATEGORIES = [
 export default function ServicesPage() {
   const { services, listings } = useApp();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const queryId = searchParams.get('id');
+  if (queryId) {
+    return <Navigate to={`/service/${queryId}`} replace />;
+  }
 
   const initialCat = searchParams.get('category') || 'All Categories';
   const initialQ = searchParams.get('q') || '';

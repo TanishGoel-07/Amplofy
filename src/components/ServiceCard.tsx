@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Star, Clock, ArrowRight, Building2, ShieldCheck } from 'lucide-react';
+import { Star, Clock, ArrowRight } from 'lucide-react';
 import type { Listing } from '@/data/types';
 import { Avatar } from '@/components/ui/Avatar';
 import { CategoryBadge } from '@/components/ui/Badge';
@@ -11,10 +11,13 @@ interface ServiceCardProps {
 
 export default function ServiceCard({ service, className = '' }: ServiceCardProps) {
   const isStartup = service.ownerType === 'startup';
-  const sellerName = service.seller?.name || 'Campus Expert';
+  const sellerName = service.seller?.name || service.startupName || 'Campus Expert';
   const sellerAvatar = service.seller?.avatar || service.images?.[0];
-  const sellerDept = service.seller?.department || (isStartup ? 'Startup' : 'Student');
+  const sellerDept = service.seller?.department || (isStartup ? 'Startup' : 'Student Specialist');
   const deliveryDays = service.deliveryDays || 1;
+  const ratingVal = service.rating ? Number(service.rating) : 5.0;
+  const reviewCount = service.reviewCount ?? 0;
+  const priceVal = Number(service.basePrice || service.price || 40);
 
   // Price label by price type: Hourly / Fixed / Starting at
   let priceLabel = 'Fixed Price';
@@ -26,6 +29,8 @@ export default function ServiceCard({ service, className = '' }: ServiceCardProp
     priceLabel = 'Starting at';
   }
 
+  const detailUrl = `/service/${service.id}`;
+
   return (
     <div
       className={`group bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col justify-between transition-all duration-200 hover:-translate-y-1 hover:shadow-md hover:border-slate-300 ${
@@ -34,9 +39,9 @@ export default function ServiceCard({ service, className = '' }: ServiceCardProp
     >
       <div>
         {/* Cover Image & Category tag */}
-        <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
+        <Link to={detailUrl} className="block relative aspect-[16/10] w-full overflow-hidden bg-slate-100 cursor-pointer">
           <img
-            src={service.images?.[0] || 'https://images.pexels.com/photos/3771074/pexels-photo-3771074.jpeg?auto=compress&cs=tinysrgb&w=800'}
+            src={service.images?.[0] || 'https://images.pexels.com/photos/546819/pexels-photo-546819.jpeg?auto=compress&cs=tinysrgb&w=800'}
             alt={service.title}
             loading="lazy"
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -51,7 +56,7 @@ export default function ServiceCard({ service, className = '' }: ServiceCardProp
               </span>
             </div>
           )}
-        </div>
+        </Link>
 
         {/* Content body */}
         <div className="p-4 space-y-3">
@@ -77,15 +82,17 @@ export default function ServiceCard({ service, className = '' }: ServiceCardProp
 
             <div className="flex items-center gap-1 text-xs font-bold text-slate-800 shrink-0">
               <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-              <span>{service.rating.toFixed(1)}</span>
-              <span className="text-[10px] text-slate-400 font-normal">({service.reviewCount})</span>
+              <span>{ratingVal.toFixed(1)}</span>
+              <span className="text-[10px] text-slate-400 font-normal">({reviewCount})</span>
             </div>
           </div>
 
           {/* Title */}
-          <h3 className="font-bold text-sm text-slate-900 leading-snug line-clamp-1 group-hover:text-[#0F766E] transition-colors">
-            {service.title}
-          </h3>
+          <Link to={detailUrl} className="block">
+            <h3 className="font-bold text-sm text-slate-900 leading-snug line-clamp-1 group-hover:text-[#0F766E] transition-colors">
+              {service.title}
+            </h3>
+          </Link>
 
           {/* One-line pitch */}
           <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
@@ -107,13 +114,13 @@ export default function ServiceCard({ service, className = '' }: ServiceCardProp
             {priceLabel}
           </span>
           <span className="text-base font-bold text-slate-900">
-            ${Number(service.basePrice).toFixed(0)}{priceSuffix}
+            ${priceVal.toFixed(0)}{priceSuffix}
           </span>
         </div>
 
         <Link
-          to={`/services?id=${service.id}`}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-[#0F766E] text-[#0F766E] hover:bg-teal-50 transition-colors shadow-2xs"
+          to={detailUrl}
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-[#0F766E] text-[#0F766E] hover:bg-[#0F766E] hover:text-white transition-colors shadow-2xs"
         >
           <span>View Details</span>
           <ArrowRight className="w-3 h-3" />

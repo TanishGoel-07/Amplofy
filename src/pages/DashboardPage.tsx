@@ -514,7 +514,7 @@ export default function DashboardPage() {
                           <DollarSign className="w-4 h-4" />
                         </div>
                       </div>
-                      <div className="text-2xl font-extrabold text-slate-900">${totalSpentAsBuyer.toFixed(2)}</div>
+                      <div className="text-2xl font-extrabold text-slate-900">${Number(totalSpentAsBuyer || 0).toFixed(2)}</div>
                       <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
                         <ArrowUpRight className="w-3.5 h-3.5" />
                         <span>Direct to student talent</span>
@@ -593,7 +593,7 @@ export default function DashboardPage() {
                           <div className="flex items-center justify-between sm:justify-end gap-3">
                             <div className="text-right">
                               <div className="text-sm font-extrabold text-slate-900">
-                                ${order.amount.toFixed(2)}
+                                ${Number(order.amount || 0).toFixed(2)}
                               </div>
                               <div className="text-[11px] text-slate-400">
                                 {new Date(order.createdAt).toLocaleDateString()}
@@ -872,7 +872,7 @@ export default function DashboardPage() {
                                 </td>
 
                                 <td className="py-3.5 font-bold text-slate-900">
-                                  ${listing.basePrice.toFixed(2)}
+                                  ${Number(listing.basePrice || 0).toFixed(2)}
                                 </td>
 
                                 <td className="py-3.5 text-slate-600">
@@ -962,7 +962,7 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between">
                       <StatusChip status={listing.status} />
                       <span className="font-extrabold text-sm text-[#0F766E]">
-                        From ${listing.basePrice.toFixed(2)}
+                        From ${Number(listing.basePrice || 0).toFixed(2)}
                       </span>
                     </div>
                     <h4 className="font-bold text-sm text-slate-900 line-clamp-1">

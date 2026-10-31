@@ -271,7 +271,7 @@ export default function OrdersPage() {
                 <div className="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto pt-3 md:pt-0 border-t md:border-t-0 border-slate-100">
                   <div className="text-left md:text-right space-y-0.5">
                     <div className="text-lg font-extrabold text-slate-900">
-                      ${order.amount.toFixed(2)}
+                      ${Number(order.amount || 0).toFixed(2)}
                     </div>
                     <div className="inline-flex items-center gap-1 text-[11px] text-slate-400">
                       <FileText className="w-3 h-3" />

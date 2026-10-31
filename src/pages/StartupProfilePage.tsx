@@ -255,7 +255,7 @@ export default function StartupProfilePage() {
 
   // Find startup by slug
   const startup = useMemo(() => {
-    return startups.find(s => s.slug === slug);
+    return startups.find(s => s.slug === slug || s.id === slug);
   }, [startups, slug]);
 
   if (!startup) {
@@ -381,7 +381,7 @@ export default function StartupProfilePage() {
                   </div>
                   <div className="flex items-center gap-1 font-semibold text-slate-900">
                     <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-                    <span>{startup.rating.toFixed(1)}</span>
+                    <span>{Number(startup.rating || 5.0).toFixed(1)}</span>
                     <span className="text-slate-400 font-normal">({startup.reviewCount} campus reviews)</span>
                   </div>
                 </div>
@@ -675,7 +675,7 @@ export default function StartupProfilePage() {
               <div className="bg-white rounded-xl border border-slate-200 p-6 flex flex-col sm:flex-row items-center gap-6 shadow-xs">
                 <div className="text-center sm:text-left sm:border-r sm:border-slate-100 sm:pr-8">
                   <div className="text-4xl font-extrabold text-slate-900">
-                    {startup.rating.toFixed(1)}
+                    {Number(startup.rating || 5.0).toFixed(1)}
                   </div>
                   <div className="flex items-center justify-center sm:justify-start gap-1 my-1">
                     {[1, 2, 3, 4, 5].map(star => (
