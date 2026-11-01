@@ -71,9 +71,9 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 w-full">
-      <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 h-16 flex items-center justify-between gap-2 lg:gap-3">
-        {/* Left: Brand Logo & Desktop Nav Links */}
-        <div className="flex items-center gap-2 lg:gap-3 xl:gap-5 min-w-0 shrink">
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 h-16 flex items-center justify-between gap-2 xl:gap-3">
+        {/* Left: Brand Logo & Desktop Nav Links (NEVER SHRINKS, NEVER CLIPS) */}
+        <div className="flex items-center gap-2 xl:gap-3 shrink-0">
           <Link to="/" className="flex items-center gap-2 group shrink-0">
             <div className="w-8 h-8 rounded-xl bg-[#0F766E] flex items-center justify-center text-white shadow-sm group-hover:bg-[#115E59] transition-colors shrink-0">
               <Store className="w-4 h-4" />
@@ -91,7 +91,7 @@ export default function Navbar() {
                   {mode === 'seller' ? 'Founder' : 'Marketplace'}
                 </span>
               </div>
-              <span className="hidden xl:block text-[10px] font-medium text-slate-400 tracking-wider">
+              <span className="hidden 2xl:block text-[10px] font-medium text-slate-400 tracking-wider">
                 Campus Startup Services
               </span>
             </div>
@@ -105,7 +105,7 @@ export default function Navbar() {
                 <NavLink
                   to="/services"
                   className={({ isActive }) =>
-                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap ${
+                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap shrink-0 ${
                       isActive ? 'bg-teal-50 text-[#0F766E] font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`
                   }
@@ -117,7 +117,7 @@ export default function Navbar() {
                 <NavLink
                   to="/startups"
                   className={({ isActive }) =>
-                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap ${
+                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap shrink-0 ${
                       isActive ? 'bg-teal-50 text-[#0F766E] font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`
                   }
@@ -129,7 +129,7 @@ export default function Navbar() {
                 <NavLink
                   to="/looking-for"
                   className={({ isActive }) =>
-                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap ${
+                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap shrink-0 ${
                       isActive ? 'bg-teal-50 text-[#0F766E] font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`
                   }
@@ -144,7 +144,7 @@ export default function Navbar() {
                 <NavLink
                   to="/community"
                   className={({ isActive }) =>
-                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap ${
+                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap shrink-0 ${
                       isActive ? 'bg-teal-50 text-[#0F766E] font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`
                   }
@@ -160,7 +160,7 @@ export default function Navbar() {
                   to="/dashboard"
                   end
                   className={({ isActive }) =>
-                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap ${
+                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap shrink-0 ${
                       isActive ? 'bg-amber-50 text-amber-900 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`
                   }
@@ -172,7 +172,7 @@ export default function Navbar() {
                 <NavLink
                   to="/dashboard?tab=listings"
                   className={({ isActive }) =>
-                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap ${
+                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap shrink-0 ${
                       isActive ? 'bg-amber-50 text-amber-900 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`
                   }
@@ -184,7 +184,7 @@ export default function Navbar() {
                 <NavLink
                   to="/orders"
                   className={({ isActive }) =>
-                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap ${
+                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap shrink-0 ${
                       isActive ? 'bg-amber-50 text-amber-900 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`
                   }
@@ -196,7 +196,7 @@ export default function Navbar() {
                 <NavLink
                   to="/looking-for"
                   className={({ isActive }) =>
-                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap ${
+                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap shrink-0 ${
                       isActive ? 'bg-amber-50 text-amber-900 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`
                   }
@@ -208,7 +208,7 @@ export default function Navbar() {
                 <NavLink
                   to="/startups"
                   className={({ isActive }) =>
-                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap ${
+                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap shrink-0 ${
                       isActive ? 'bg-amber-50 text-amber-900 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`
                   }
@@ -221,14 +221,14 @@ export default function Navbar() {
           </nav>
         </div>
 
-        {/* Center: Search input (desktop, xl and up only) */}
-        <div className="hidden xl:flex items-center w-36 2xl:w-56 shrink min-w-0">
+        {/* Center: Search input (desktop, xl and up only — neatly constrained so it NEVER collides) */}
+        <div className="hidden xl:flex items-center flex-1 max-w-[170px] 2xl:max-w-xs mx-1.5 2xl:mx-3 min-w-0 shrink">
           <form onSubmit={handleSearch} className="relative flex items-center w-full">
             <input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search services or startups..."
+              placeholder="Search services..."
               className="w-full bg-slate-100 hover:bg-slate-50 focus:bg-white border border-slate-200 rounded-full pl-8 pr-7 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 transition-all outline-none"
             />
             <button
@@ -250,13 +250,13 @@ export default function Navbar() {
           </form>
         </div>
 
-        {/* Right: Actions, Log in / Avatar Menu, and Post button */}
+        {/* Right: Actions, Log in / Avatar Menu, and Post button (SHRINK-0) */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Mobile & Tablet search toggle (visible whenever inline search is hidden) */}
           <button
             type="button"
             onClick={() => setMobileSearchOpen(prev => !prev)}
-            className="xl:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 shrink-0"
+            className="xl:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 shrink-0 cursor-pointer"
             aria-label="Search"
           >
             <Search className="w-4 h-4" />
@@ -303,11 +303,11 @@ export default function Navbar() {
 
           {/* User Auth or Avatar Dropdown */}
           {isAuthed && currentUser ? (
-            <div className="relative" ref={avatarRef}>
+            <div className="relative shrink-0" ref={avatarRef}>
               <button
                 type="button"
                 onClick={() => setAvatarMenuOpen(prev => !prev)}
-                className="flex items-center gap-2 p-1 rounded-full hover:ring-2 hover:ring-slate-200 transition-all focus:outline-none"
+                className="flex items-center gap-2 p-1 rounded-full hover:ring-2 hover:ring-slate-200 transition-all focus:outline-none cursor-pointer"
                 aria-label="User menu"
               >
                 <Avatar
@@ -434,7 +434,7 @@ export default function Navbar() {
                       onClick={() => {
                         toggleMode();
                       }}
-                      className="w-full flex items-center justify-between px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 text-left transition-colors"
+                      className="w-full flex items-center justify-between px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 text-left transition-colors cursor-pointer"
                     >
                       <span className="flex items-center gap-2">
                         <Repeat className="w-4 h-4 text-slate-400" />
@@ -454,7 +454,7 @@ export default function Navbar() {
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 text-left"
+                      className="w-full flex items-center gap-2 px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 text-left cursor-pointer"
                     >
                       <LogOut className="w-4 h-4" />
                       <span>Log out</span>
@@ -482,7 +482,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(prev => !prev)}
-            className="lg:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 focus:outline-none shrink-0"
+            className="lg:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 focus:outline-none shrink-0 cursor-pointer"
             aria-label="Toggle menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
