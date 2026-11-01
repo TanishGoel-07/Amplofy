@@ -212,31 +212,44 @@ export default function Navbar() {
         </div>
 
         {/* Center: Search input (desktop) */}
-        <div className="hidden xl:flex flex-1 max-w-sm mx-3 min-w-0">
-          <form onSubmit={handleSearch} className="w-full">
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search startup services (dev, design, tutoring, photo)..."
-                className="w-full bg-slate-100 border border-transparent rounded-lg pl-9 pr-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 transition-all outline-none"
-              />
-            </div>
+        <div className="hidden lg:flex items-center w-48 xl:w-72 mx-2 shrink-0">
+          <form onSubmit={handleSearch} className="relative flex items-center w-full">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search services or startups..."
+              className="w-full bg-slate-100 hover:bg-slate-50 focus:bg-white border border-slate-200 rounded-full pl-8 pr-7 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 transition-all outline-none"
+            />
+            <button
+              type="submit"
+              title="Search"
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#0F766E] transition-colors cursor-pointer"
+            >
+              <Search className="w-3.5 h-3.5" />
+            </button>
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
           </form>
         </div>
 
         {/* Right: Actions, Log in / Avatar Menu, and Post button */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
           {/* Mobile search toggle */}
           <button
             type="button"
             onClick={() => setMobileSearchOpen(prev => !prev)}
-            className="lg:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100"
+            className="lg:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 shrink-0"
             aria-label="Search"
           >
-            <Search className="w-5 h-5" />
+            <Search className="w-4 h-4" />
           </button>
 
           {/* Quick Mode Switcher Pill in Top Bar */}
@@ -463,19 +476,29 @@ export default function Navbar() {
 
       {/* Mobile Search Bar Expand */}
       {mobileSearchOpen && (
-        <div className="lg:hidden px-4 pb-3 pt-1 border-b border-slate-200 bg-white animate-fade-in">
-          <form onSubmit={handleSearch}>
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+        <div className="lg:hidden px-4 pb-3 pt-2 border-b border-slate-200 bg-white animate-fade-in shadow-md">
+          <form onSubmit={handleSearch} className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search startup services..."
-                className="w-full bg-slate-100 border border-slate-200 rounded-lg pl-9 pr-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 focus:border-[#0F766E]"
+                className="w-full bg-slate-100 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 focus:border-[#0F766E]"
                 autoFocus
               />
             </div>
+            <Button variant="primary" size="sm" type="submit" className="shrink-0 font-bold">
+              Search
+            </Button>
+            <button
+              type="button"
+              onClick={() => setMobileSearchOpen(false)}
+              className="p-1.5 text-slate-400 hover:text-slate-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </form>
         </div>
       )}

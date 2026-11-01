@@ -74,6 +74,23 @@ export interface User {
   skills?: string[];
 }
 
+export interface StartupPaymentDetails {
+  upiId?: string;
+  accountHolderName?: string;
+  upiQrUrl?: string;
+  bankName?: string;
+  accountNumber?: string;
+  ifscCode?: string;
+  acceptedMethods?: {
+    upi?: boolean;
+    qrCode?: boolean;
+    bankTransfer?: boolean;
+    cards?: boolean;
+    cod?: boolean;
+  };
+  paymentInstructions?: string;
+}
+
 export interface Startup {
   id: string;
   ownerId: string;
@@ -102,6 +119,7 @@ export interface Startup {
   reviewCount: number;
   servicesCount?: number;
   productsCount?: number;
+  paymentDetails?: StartupPaymentDetails;
   createdAt: string;
 }
 
@@ -161,6 +179,7 @@ export interface Listing {
     showContact: boolean;
   };
   packages?: ServicePackage[];
+  paymentDetails?: StartupPaymentDetails;
   createdAt: string;
 }
 
@@ -193,6 +212,9 @@ export interface Order {
   status: OrderStatus;
   amount: number;
   inquiryMessage: string;
+  paymentMethod?: string;
+  paymentRef?: string;
+  paymentStatus?: 'pending' | 'submitted' | 'verified';
   createdAt: string;
   notesCount?: number;
 }

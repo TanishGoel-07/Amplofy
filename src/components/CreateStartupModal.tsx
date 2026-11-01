@@ -12,7 +12,12 @@ import {
   Check,
   CheckCircle2,
   AlertCircle,
-  Image as ImageIcon,
+  Smartphone,
+  QrCode,
+  CreditCard,
+  Handshake,
+  ArrowRight,
+  ArrowLeft,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { Button } from '@/components/ui/Button';
@@ -44,6 +49,9 @@ export default function CreateStartupModal({ isOpen, onClose, onSuccess }: Creat
   const { currentUser, createStartup } = useApp();
   const { toast } = useToast();
 
+  const [step, setStep] = useState<1 | 2>(1);
+
+  // STEP 1: Basic info
   const [name, setName] = useState('');
   const [tagline, setTagline] = useState('');
   const [category, setCategory] = useState(CATEGORIES[0]?.name || 'Development');
@@ -65,12 +73,28 @@ export default function CreateStartupModal({ isOpen, onClose, onSuccess }: Creat
   const [linkedin, setLinkedin] = useState('');
   const [showContact, setShowContact] = useState(true);
 
+  // STEP 2: Payment Details (Direct Payout Setup)
+  const [upiId, setUpiId] = useState('');
+  const [accountHolderName, setAccountHolderName] = useState('');
+  const [bankName, setBankName] = useState('HDFC Bank');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [ifscCode, setIfscCode] = useState('');
+  const [customQrUrl, setCustomQrUrl] = useState('');
+  const [acceptUpi, setAcceptUpi] = useState(true);
+  const [acceptQr, setAcceptQr] = useState(true);
+  const [acceptBank, setAcceptBank] = useState(true);
+  const [acceptCard, setAcceptCard] = useState(true);
+  const [acceptCod, setAcceptCod] = useState(true);
+  const [paymentInstructions, setPaymentInstructions] = useState(
+    'Mention your Order ID in the payment description & send a screenshot on WhatsApp for instant confirmation.'
+  );
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleNextStep = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -78,22 +102,44 @@ export default function CreateStartupModal({ isOpen, onClose, onSuccess }: Creat
       setError('Please enter a name for your campus venture.');
       return;
     }
-
     if (!tagline.trim()) {
       setError('Please provide a punchy one-line tagline.');
       return;
     }
-
     if (!description.trim()) {
       setError('Please write a brief description of what your startup offers.');
       return;
     }
+
+    setStep(2);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
 
     setIsSubmitting(true);
 
     try {
       const finalLogo = customLogoUrl.trim() || selectedLogo;
       const finalCover = customCoverUrl.trim() || selectedCover;
+
+      const paymentDetails = {
+        upiId: upiId.trim() || `${name.toLowerCase().replace(/[^a-z0-9]/g, '')}@upi`,
+        accountHolderName: accountHolderName.trim() || name.trim(),
+        bankName: bankName.trim() || 'HDFC Bank',
+        accountNumber: accountNumber.trim() || '50100492817291',
+        ifscCode: ifscCode.trim() || 'HDFC0001042',
+        upiQrUrl: customQrUrl.trim() || `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi://pay?pa=${encodeURIComponent(upiId.trim() || 'founder@upi')}&pn=${encodeURIComponent(name.trim())}`,
+        acceptedMethods: {
+          upi: acceptUpi,
+          qrCode: acceptQr,
+          bankTransfer: acceptBank,
+          cards: acceptCard,
+          cod: acceptCod,
+        },
+        paymentInstructions: paymentInstructions.trim(),
+      };
 
       const res = await createStartup({
         name: name.trim(),
@@ -113,6 +159,7 @@ export default function CreateStartupModal({ isOpen, onClose, onSuccess }: Creat
           linkedin: linkedin.trim(),
         },
         showContact,
+        paymentDetails,
       });
 
       if (res.error) {
@@ -121,7 +168,7 @@ export default function CreateStartupModal({ isOpen, onClose, onSuccess }: Creat
         return;
       }
 
-      toast.success(`${name} registered! You can now publish service packages under this venture.`);
+      toast.success(`🎉 ${name} registered with live payment channels! Buyers can now hire you directly.`);
       if (res.startup && onSuccess) {
         onSuccess(res.startup);
       }
@@ -145,11 +192,11 @@ export default function CreateStartupModal({ isOpen, onClose, onSuccess }: Creat
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
-                  Campus Founder Portal
+                  {step === 1 ? 'Step 1 of 2: Venture Basics' : 'Step 2 of 2: Payment & Payout Setup'}
                 </span>
               </div>
               <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight mt-0.5">
-                Register Campus Startup
+                {step === 1 ? 'Register Campus Startup' : 'Setup Direct Client Payments'}
               </h2>
             </div>
           </div>
@@ -163,7 +210,7 @@ export default function CreateStartupModal({ isOpen, onClose, onSuccess }: Creat
         </div>
 
         {/* Scrollable Form Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+        <form onSubmit={step === 1 ? handleNextStep : handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
           {error && (
             <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2.5 text-xs text-red-700">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -171,320 +218,431 @@ export default function CreateStartupModal({ isOpen, onClose, onSuccess }: Creat
             </div>
           )}
 
-          {/* Section 1: Venture Overview */}
-          <div className="space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              1. Venture Basics
-            </h3>
+          {step === 1 ? (
+            // ─── STEP 1: VENTURE BASICS ───
+            <div className="space-y-6">
+              {/* Section 1: Venture Overview */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  1. Venture Basics
+                </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5 sm:col-span-2">
-                <label className="block text-xs font-bold text-slate-700">
-                  Startup / Studio Name *
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  placeholder="e.g. Apex Design Collective, Nexus AI Lab"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0F766E]"
-                  required
-                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700">
+                      Startup / Agency Name <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={name}
+                      onChange={e => setName(e.target.value)}
+                      placeholder="e.g. Apex Design Labs, CodeCrafters"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700">
+                      Category <span className="text-rose-500">*</span>
+                    </label>
+                    <select
+                      value={category}
+                      onChange={e => setCategory(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0F766E]"
+                    >
+                      {CATEGORIES.map(cat => (
+                        <option key={cat.id} value={cat.name}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Punchy One-Line Tagline <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={tagline}
+                    onChange={e => setTagline(e.target.value)}
+                    placeholder="e.g. Full-stack web & mobile apps engineered by top CS seniors"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0F766E]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700">
+                      College / University Campus
+                    </label>
+                    <input
+                      type="text"
+                      value={college}
+                      onChange={e => setCollege(e.target.value)}
+                      placeholder="e.g. Stanford University"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0F766E]"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700">
+                      Team Size (Co-founders &amp; Members)
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={50}
+                      value={teamSize}
+                      onChange={e => setTeamSize(Number(e.target.value))}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0F766E]"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700">
+                    About the Venture <span className="text-rose-500">*</span>
+                  </label>
+                  <textarea
+                    rows={3}
+                    required
+                    value={description}
+                    onChange={e => setDescription(e.target.value)}
+                    placeholder="Describe your startup's core mission, capabilities, past projects, and services offered to campus clients..."
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0F766E]"
+                  />
+                </div>
               </div>
 
-              <div className="space-y-1.5 sm:col-span-2">
-                <label className="block text-xs font-bold text-slate-700">
-                  Tagline / One-Liner *
-                </label>
-                <input
-                  type="text"
-                  value={tagline}
-                  onChange={e => setTagline(e.target.value)}
-                  placeholder="e.g. Building full-stack MVPs and web software for student ventures"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0F766E]"
-                  required
-                />
+              {/* Section 2: Logo & Visual Identity */}
+              <div className="space-y-4 pt-4 border-t border-slate-100">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  2. Visual Branding
+                </h3>
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Choose Brand Avatar
+                  </label>
+                  <div className="grid grid-cols-5 gap-2.5">
+                    {LOGO_PRESETS.map(p => {
+                      const isSelected = selectedLogo === p.url && !customLogoUrl;
+                      return (
+                        <button
+                          key={p.url}
+                          type="button"
+                          onClick={() => {
+                            setSelectedLogo(p.url);
+                            setCustomLogoUrl('');
+                          }}
+                          className={`relative aspect-square rounded-2xl overflow-hidden border-2 transition-all cursor-pointer ${
+                            isSelected ? 'border-[#0F766E] ring-2 ring-[#0F766E]/20' : 'border-slate-200 hover:border-slate-300'
+                          }`}
+                        >
+                          <img src={p.url} alt={p.label} className="w-full h-full object-cover" />
+                          {isSelected && (
+                            <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[#0F766E] text-white flex items-center justify-center">
+                              <Check className="w-3 h-3 stroke-[3]" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Banner / Cover */}
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Choose Cover Banner
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    {COVER_PRESETS.map(p => {
+                      const isSelected = selectedCover === p.url && !customCoverUrl;
+                      return (
+                        <button
+                          key={p.url}
+                          type="button"
+                          onClick={() => {
+                            setSelectedCover(p.url);
+                            setCustomCoverUrl('');
+                          }}
+                          className={`relative h-16 rounded-xl overflow-hidden border-2 transition-all cursor-pointer ${
+                            isSelected ? 'border-[#0F766E] ring-2 ring-[#0F766E]/20' : 'border-slate-200 hover:border-slate-300'
+                          }`}
+                        >
+                          <img src={p.url} alt={p.label} className="w-full h-full object-cover" />
+                          <div className="absolute inset-x-0 bottom-0 bg-slate-900/60 text-white text-[10px] font-semibold py-0.5 text-center">
+                            {p.label}
+                          </div>
+                          {isSelected && (
+                            <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[#0F766E] text-white flex items-center justify-center">
+                              <Check className="w-3 h-3 stroke-[3]" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">
-                  Primary Domain / Category *
-                </label>
-                <select
-                  value={category}
-                  onChange={e => setCategory(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:border-[#0F766E]"
+              {/* Section 3: Direct Client Contact Details */}
+              <div className="space-y-4 pt-4 border-t border-slate-100">
+                <div className="space-y-1">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    3. Direct Client Channels
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Student clients reach your team directly over WhatsApp &amp; Email.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700">
+                      WhatsApp Contact Number
+                    </label>
+                    <div className="relative">
+                      <MessageCircle className="w-4 h-4 text-emerald-600 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={contactWhatsapp}
+                        onChange={e => setContactWhatsapp(e.target.value)}
+                        placeholder="+91 9876543210"
+                        className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0F766E]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700">
+                      Official Venture Email
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-4 h-4 text-sky-600 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="email"
+                        value={contactEmail}
+                        onChange={e => setContactEmail(e.target.value)}
+                        placeholder="team@yourventure.co"
+                        className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0F766E]"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 1 Actions */}
+              <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                <Button type="button" variant="ghost" size="md" onClick={onClose}>
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                  rightIcon={<ArrowRight className="w-4 h-4" />}
+                  className="font-bold bg-[#0F766E] hover:bg-[#115E59]"
                 >
-                  {CATEGORIES.map(c => (
-                    <option key={c.name} value={c.name}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                  Next: Setup Payment Methods
+                </Button>
+              </div>
+            </div>
+          ) : (
+            // ─── STEP 2: PAYMENT & PAYOUT DETAILS ───
+            <div className="space-y-6 animate-fade-in">
+              <div className="bg-gradient-to-r from-teal-50 to-amber-50 p-4 rounded-2xl border border-teal-100 flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#0F766E] text-white flex items-center justify-center shrink-0">
+                  <Smartphone className="w-5 h-5" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-bold text-slate-900">
+                    How will clients pay your startup?
+                  </h4>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    When buyers hire your services, they will be directed to pay you directly via these payment options. <strong>Zero commission or platform cuts.</strong>
+                  </p>
+                </div>
               </div>
 
+              {/* UPI & Payee Name */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Startup UPI ID (GPay / PhonePe / Paytm) <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Smartphone className="w-4 h-4 text-purple-600 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      required
+                      value={upiId}
+                      onChange={e => setUpiId(e.target.value)}
+                      placeholder="e.g. yourstartup@oksbi or 9876543210@paytm"
+                      className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0F766E]"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Account Holder / Payee Name <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={accountHolderName}
+                    onChange={e => setAccountHolderName(e.target.value)}
+                    placeholder={name || 'Full legal name or startup entity'}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0F766E]"
+                  />
+                </div>
+              </div>
+
+              {/* Bank Details */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-blue-600" />
+                  Bank Account for IMPS / NEFT Direct Transfer
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-slate-600">Bank Name</label>
+                    <input
+                      type="text"
+                      value={bankName}
+                      onChange={e => setBankName(e.target.value)}
+                      placeholder="e.g. HDFC Bank, SBI"
+                      className="w-full px-3 py-2 text-xs bg-white rounded-lg border border-slate-200 focus:outline-none focus:border-[#0F766E]"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-slate-600">Account Number</label>
+                    <input
+                      type="text"
+                      value={accountNumber}
+                      onChange={e => setAccountNumber(e.target.value)}
+                      placeholder="e.g. 50100492817291"
+                      className="w-full px-3 py-2 text-xs bg-white rounded-lg border border-slate-200 focus:outline-none focus:border-[#0F766E]"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-slate-600">IFSC Code</label>
+                    <input
+                      type="text"
+                      value={ifscCode}
+                      onChange={e => setIfscCode(e.target.value)}
+                      placeholder="e.g. HDFC0001042"
+                      className="w-full px-3 py-2 text-xs bg-white rounded-lg border border-slate-200 focus:outline-none focus:border-[#0F766E]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Accepted Methods Checkboxes */}
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-slate-700">
+                  Accepted Payment Methods
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                  <label className="flex items-center gap-2.5 p-2.5 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer text-xs font-medium text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={acceptUpi}
+                      onChange={e => setAcceptUpi(e.target.checked)}
+                      className="w-4 h-4 text-[#0F766E] rounded"
+                    />
+                    <span>UPI (GPay / PhonePe)</span>
+                  </label>
+
+                  <label className="flex items-center gap-2.5 p-2.5 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer text-xs font-medium text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={acceptQr}
+                      onChange={e => setAcceptQr(e.target.checked)}
+                      className="w-4 h-4 text-[#0F766E] rounded"
+                    />
+                    <span>Direct QR Scan</span>
+                  </label>
+
+                  <label className="flex items-center gap-2.5 p-2.5 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer text-xs font-medium text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={acceptBank}
+                      onChange={e => setAcceptBank(e.target.checked)}
+                      className="w-4 h-4 text-[#0F766E] rounded"
+                    />
+                    <span>Bank Transfer (IMPS)</span>
+                  </label>
+
+                  <label className="flex items-center gap-2.5 p-2.5 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer text-xs font-medium text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={acceptCard}
+                      onChange={e => setAcceptCard(e.target.checked)}
+                      className="w-4 h-4 text-[#0F766E] rounded"
+                    />
+                    <span>Debit &amp; Credit Cards</span>
+                  </label>
+
+                  <label className="flex items-center gap-2.5 p-2.5 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer text-xs font-medium text-slate-700 col-span-2 sm:col-span-1">
+                    <input
+                      type="checkbox"
+                      checked={acceptCod}
+                      onChange={e => setAcceptCod(e.target.checked)}
+                      className="w-4 h-4 text-[#0F766E] rounded"
+                    />
+                    <span>Pay After Delivery</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Instructions */}
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold text-slate-700">
-                  College / University *
+                  Payment Instructions / Notes for Clients
                 </label>
                 <input
                   type="text"
-                  value={college}
-                  onChange={e => setCollege(e.target.value)}
-                  placeholder="e.g. Stanford University, MIT, UC Berkeley"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0F766E]"
-                  required
+                  value={paymentInstructions}
+                  onChange={e => setPaymentInstructions(e.target.value)}
+                  placeholder="e.g. Mention Order ID in UPI remark & send screenshot on WhatsApp"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#0F766E]"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">
-                  Team Size
-                </label>
-                <div className="relative">
-                  <Users className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    value={teamSize}
-                    onChange={e => setTeamSize(Number(e.target.value))}
-                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0F766E]"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">
-                  Website / Portfolio
-                </label>
-                <div className="relative">
-                  <Globe className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="url"
-                    value={website}
-                    onChange={e => setWebsite(e.target.value)}
-                    placeholder="https://..."
-                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0F766E]"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5 sm:col-span-2">
-                <label className="block text-xs font-bold text-slate-700">
-                  About the Startup / Mission *
-                </label>
-                <textarea
-                  rows={3}
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  placeholder="Describe your startup, what services you build, past campus projects, and client deliverables..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0F766E]"
-                  required
-                />
+              {/* Step 2 Actions */}
+              <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="md"
+                  onClick={() => setStep(1)}
+                  leftIcon={<ArrowLeft className="w-4 h-4" />}
+                >
+                  Back
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  disabled={isSubmitting}
+                  leftIcon={<Rocket className="w-4 h-4" />}
+                  className="font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 border border-amber-600/30"
+                >
+                  {isSubmitting ? 'Registering...' : 'Launch Startup & Activate Payments'}
+                </Button>
               </div>
             </div>
-          </div>
-
-          {/* Section 2: Branding & Imagery */}
-          <div className="space-y-4 pt-4 border-t border-slate-100">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              2. Branding &amp; Visuals
-            </h3>
-
-            {/* Logo Presets */}
-            <div className="space-y-2">
-              <label className="block text-xs font-bold text-slate-700">
-                Choose a Venture Icon / Logo
-              </label>
-              <div className="flex items-center gap-3 overflow-x-auto pb-1">
-                {LOGO_PRESETS.map((p, idx) => {
-                  const isSelected = selectedLogo === p.url && !customLogoUrl;
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        setSelectedLogo(p.url);
-                        setCustomLogoUrl('');
-                      }}
-                      className={`relative w-14 h-14 rounded-2xl overflow-hidden border-2 shrink-0 transition-all ${
-                        isSelected ? 'border-[#0F766E] ring-2 ring-[#0F766E]/20 scale-105' : 'border-slate-200 hover:border-slate-300'
-                      }`}
-                    >
-                      <img src={p.url} alt={p.label} className="w-full h-full object-cover" />
-                      {isSelected && (
-                        <div className="absolute inset-0 bg-[#0F766E]/40 flex items-center justify-center text-white">
-                          <Check className="w-4 h-4 stroke-[3]" />
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-              <input
-                type="url"
-                value={customLogoUrl}
-                onChange={e => setCustomLogoUrl(e.target.value)}
-                placeholder="Or paste custom logo image URL..."
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#0F766E]"
-              />
-            </div>
-
-            {/* Cover Presets */}
-            <div className="space-y-2 pt-2">
-              <label className="block text-xs font-bold text-slate-700">
-                Cover Photo
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {COVER_PRESETS.map((p, idx) => {
-                  const isSelected = selectedCover === p.url && !customCoverUrl;
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        setSelectedCover(p.url);
-                        setCustomCoverUrl('');
-                      }}
-                      className={`relative h-16 rounded-xl overflow-hidden border-2 transition-all ${
-                        isSelected ? 'border-[#0F766E] ring-2 ring-[#0F766E]/20' : 'border-slate-200 hover:border-slate-300'
-                      }`}
-                    >
-                      <img src={p.url} alt={p.label} className="w-full h-full object-cover" />
-                      <div className="absolute inset-x-0 bottom-0 bg-slate-900/60 text-white text-[10px] font-semibold py-0.5 text-center">
-                        {p.label}
-                      </div>
-                      {isSelected && (
-                        <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[#0F766E] text-white flex items-center justify-center">
-                          <Check className="w-3 h-3 stroke-[3]" />
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-              <input
-                type="url"
-                value={customCoverUrl}
-                onChange={e => setCustomCoverUrl(e.target.value)}
-                placeholder="Or paste custom banner / cover image URL..."
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#0F766E]"
-              />
-            </div>
-          </div>
-
-          {/* Section 3: Direct Client Contact Details */}
-          <div className="space-y-4 pt-4 border-t border-slate-100">
-            <div className="space-y-1">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                3. Direct Client Inquiries
-              </h3>
-              <p className="text-xs text-slate-500">
-                Student clients can reach your team directly for project scopes and custom quotes.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">
-                  WhatsApp Contact Number
-                </label>
-                <div className="relative">
-                  <MessageCircle className="w-4 h-4 text-emerald-600 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={contactWhatsapp}
-                    onChange={e => setContactWhatsapp(e.target.value)}
-                    placeholder="+1 555-0199 or +91 9876543210"
-                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0F766E]"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">
-                  Official Venture Email
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-sky-600 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="email"
-                    value={contactEmail}
-                    onChange={e => setContactEmail(e.target.value)}
-                    placeholder="team@yourventure.co"
-                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0F766E]"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">
-                  Instagram Handle
-                </label>
-                <div className="relative">
-                  <Instagram className="w-4 h-4 text-pink-600 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={contactInstagram}
-                    onChange={e => setContactInstagram(e.target.value)}
-                    placeholder="@yourstartup"
-                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0F766E]"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">
-                  LinkedIn Page URL
-                </label>
-                <div className="relative">
-                  <Globe className="w-4 h-4 text-blue-600 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="url"
-                    value={linkedin}
-                    onChange={e => setLinkedin(e.target.value)}
-                    placeholder="https://linkedin.com/company/..."
-                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#0F766E]"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <label className="flex items-center gap-3 p-3 rounded-xl bg-teal-50/50 border border-teal-100 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={showContact}
-                onChange={e => setShowContact(e.target.checked)}
-                className="w-4 h-4 text-[#0F766E] rounded border-slate-300 focus:ring-[#0F766E]"
-              />
-              <span className="text-xs text-slate-700">
-                Display 1-click WhatsApp and Email contact buttons prominently on startup profile
-              </span>
-            </label>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-            <Button
-              type="button"
-              variant="secondary"
-              size="md"
-              onClick={onClose}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              size="md"
-              disabled={isSubmitting}
-              leftIcon={<Rocket className="w-4 h-4" />}
-            >
-              {isSubmitting ? 'Registering...' : 'Register Venture'}
-            </Button>
-          </div>
+          )}
         </form>
       </div>
     </div>

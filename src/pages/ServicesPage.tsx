@@ -107,7 +107,7 @@ export default function ServicesPage() {
       );
     }
 
-    // Search Query
+    // Search Query (Multi-field match across title, description, category, startup, tags, and packages)
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
@@ -115,7 +115,11 @@ export default function ServicesPage() {
           s.title.toLowerCase().includes(q) ||
           s.description.toLowerCase().includes(q) ||
           s.category.toLowerCase().includes(q) ||
-          (s.seller?.name && s.seller.name.toLowerCase().includes(q))
+          (s.seller?.name && s.seller.name.toLowerCase().includes(q)) ||
+          ((s as any).startupName && (s as any).startupName.toLowerCase().includes(q)) ||
+          (s.startup?.name && s.startup.name.toLowerCase().includes(q)) ||
+          (s.tags && s.tags.some(t => t.toLowerCase().includes(q))) ||
+          (s.packages && s.packages.some(p => p.title.toLowerCase().includes(q) || p.features?.some(f => f.toLowerCase().includes(q))))
       );
     }
 
@@ -238,6 +242,41 @@ export default function ServicesPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Search Bar for Live Service Filtering */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-xs flex flex-col sm:flex-row items-center gap-3">
+        <div className="relative flex-1 w-full">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
+            placeholder="Search by keyword, startup name, skill, or service (e.g. Web Dev, UI/UX, Tutoring)..."
+            className="w-full pl-10 pr-9 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:bg-white focus:outline-none focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 transition-all text-slate-900 placeholder:text-slate-400"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+        {searchQuery && (
+          <button
+            type="button"
+            onClick={() => setSearchQuery('')}
+            className="px-3 py-2 text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl shrink-0 transition-colors cursor-pointer"
+          >
+            Clear Search
+          </button>
+        )}
       </div>
 
       {/* 2. MAIN BROWSE LAYOUT */}

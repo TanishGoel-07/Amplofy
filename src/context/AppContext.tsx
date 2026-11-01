@@ -5,6 +5,7 @@ import type {
   BlockedUser, TransactionStatus, Comment,
   Startup, Listing, Order, Quote, OrderNote, Review, OrderStatus,
   StartupLookingFor, LookingForResponse, AccountType,
+  StartupPaymentDetails,
 } from '@/data/types';
 import {
   mockStudents, mockStartups, mockProducts, mockServices, mockOrders, mockReviews, mockOrderNotes,
@@ -312,6 +313,7 @@ interface AppState {
   addOrderNote: (note: Partial<OrderNote>) => Promise<{ error: string | null; id?: string }>;
   addReview: (review: Partial<Review>) => Promise<{ error: string | null; id?: string }>;
   createStartup: (startup: Partial<Startup>) => Promise<{ error: string | null; startup?: Startup }>;
+  updateStartupPaymentDetails: (startupId: string, paymentDetails: StartupPaymentDetails) => Promise<void>;
   registerCampusUser: (params: {
     name: string;
     email: string;
@@ -1800,6 +1802,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return { error: null, id };
   }, [currentUser]);
 
+  const updateStartupPaymentDetails = useCallback(async (startupId: string, paymentDetails: StartupPaymentDetails) => {
+    setStartups(prev => {
+      const next = prev.map(s => s.id === startupId ? { ...s, paymentDetails } : s);
+      try {
+        localStorage.setItem('amplofy_startups', JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+  }, []);
+
   const createStartup = useCallback(async (data: Partial<Startup>): Promise<{ error: string | null; startup?: Startup }> => {
     const id = 'stp-' + Date.now();
     const slug = (data.name || 'startup')
@@ -1830,6 +1842,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       reviewCount: 0,
       servicesCount: 0,
       productsCount: 0,
+      paymentDetails: data.paymentDetails,
       createdAt: new Date().toISOString().split('T')[0],
     };
 
@@ -2093,6 +2106,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addOrderNote,
       addReview,
       createStartup,
+      updateStartupPaymentDetails,
       registerCampusUser,
       getProfileById,
       fetchProfilesByIds,

@@ -18,6 +18,7 @@ import { CategoryBadge } from '@/components/ui/Badge';
 import ServiceCard from '@/components/ServiceCard';
 import ContactSellerModal from '@/components/ContactSellerModal';
 import OrderQuoteModal from '@/components/OrderQuoteModal';
+import PaymentCheckoutModal from '@/components/PaymentCheckoutModal';
 import { useToast } from '@/components/ui/Toast';
 import type { ServicePackage } from '@/data/types';
 
@@ -38,6 +39,7 @@ export default function ServiceDetailPage() {
   const [activeImage, setActiveImage] = useState(0);
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [orderModalOpen, setOrderModalOpen] = useState(false);
+  const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
   const [orderModalMode, setOrderModalMode] = useState<'order' | 'quote'>('order');
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
@@ -507,13 +509,12 @@ export default function ServiceDetailPage() {
               <Button
                 variant="primary"
                 size="lg"
-                className="w-full shadow-sm"
+                className="w-full shadow-sm font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 border border-amber-600/30"
                 onClick={() => {
-                  setOrderModalMode('order');
-                  setOrderModalOpen(true);
+                  setCheckoutModalOpen(true);
                 }}
               >
-                Place order (${activePackage.price})
+                Buy Service &amp; Pay (${activePackage.price})
               </Button>
 
               <Button
@@ -564,6 +565,15 @@ export default function ServiceDetailPage() {
         onClose={() => setContactModalOpen(false)}
         seller={seller}
         listingTitle={service.title}
+      />
+
+      {/* Direct Payment Checkout Modal */}
+      <PaymentCheckoutModal
+        isOpen={checkoutModalOpen}
+        onClose={() => setCheckoutModalOpen(false)}
+        listing={service}
+        selectedPackage={activePackage}
+        startup={linkedStartup}
       />
 
       {/* Place Order & Custom Quote Modal */}

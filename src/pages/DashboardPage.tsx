@@ -2,6 +2,9 @@ import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
+  CreditCard,
+  Smartphone,
+  QrCode,
   ShoppingBag,
   GraduationCap,
   Award,
@@ -84,11 +87,12 @@ export default function DashboardPage() {
     updateListingStatus,
     deleteListing,
     loginAsDemoFounder,
+    updateStartupPaymentDetails,
   } = useApp();
 
   // Active navigation view
   const [activeNav, setActiveNav] = useState<
-    'overview' | 'listings' | 'orders' | 'community' | 'reviews' | 'team' | 'analytics' | 'looking-for' | 'my-collabs'
+    'overview' | 'listings' | 'orders' | 'community' | 'reviews' | 'team' | 'analytics' | 'looking-for' | 'my-collabs' | 'payments'
   >('overview');
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -99,6 +103,52 @@ export default function DashboardPage() {
 
   // Service table search filter
   const [listingSearch, setListingSearch] = useState('');
+  // Active startup for payments
+  const myStartup = useMemo(() => {
+    return startups.find(s => s.ownerId === currentUser?.id) || startups[0];
+  }, [startups, currentUser]);
+
+  const [paymentUpi, setPaymentUpi] = useState(() => myStartup?.paymentDetails?.upiId || 'founder@oksbi');
+  const [paymentHolder, setPaymentHolder] = useState(() => myStartup?.paymentDetails?.accountHolderName || myStartup?.name || 'Campus Founder');
+  const [paymentBank, setPaymentBank] = useState(() => myStartup?.paymentDetails?.bankName || 'HDFC Bank');
+  const [paymentAccNum, setPaymentAccNum] = useState(() => myStartup?.paymentDetails?.accountNumber || '50100492817291');
+  const [paymentIfsc, setPaymentIfsc] = useState(() => myStartup?.paymentDetails?.ifscCode || 'HDFC0001042');
+  const [paymentUpiMethod, setPaymentUpiMethod] = useState(() => myStartup?.paymentDetails?.acceptedMethods?.upi ?? true);
+  const [paymentQrMethod, setPaymentQrMethod] = useState(() => myStartup?.paymentDetails?.acceptedMethods?.qrCode ?? true);
+  const [paymentBankMethod, setPaymentBankMethod] = useState(() => myStartup?.paymentDetails?.acceptedMethods?.bankTransfer ?? true);
+  const [paymentCardMethod, setPaymentCardMethod] = useState(() => myStartup?.paymentDetails?.acceptedMethods?.cards ?? true);
+  const [paymentCodMethod, setPaymentCodMethod] = useState(() => myStartup?.paymentDetails?.acceptedMethods?.cod ?? true);
+  const [paymentNotes, setPaymentNotes] = useState(() => myStartup?.paymentDetails?.paymentInstructions || 'Send screenshot on WhatsApp with your Order ID for instant project kickoff.');
+  const [isSavingPayments, setIsSavingPayments] = useState(false);
+
+  const handleSavePaymentSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!myStartup) {
+      toast.error('No registered startup found. Please register a startup first.');
+      return;
+    }
+    setIsSavingPayments(true);
+    const updatedDetails = {
+      upiId: paymentUpi.trim(),
+      accountHolderName: paymentHolder.trim(),
+      bankName: paymentBank.trim(),
+      accountNumber: paymentAccNum.trim(),
+      ifscCode: paymentIfsc.trim(),
+      upiQrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi://pay?pa=${encodeURIComponent(paymentUpi.trim())}&pn=${encodeURIComponent(paymentHolder.trim())}`,
+      acceptedMethods: {
+        upi: paymentUpiMethod,
+        qrCode: paymentQrMethod,
+        bankTransfer: paymentBankMethod,
+        cards: paymentCardMethod,
+        cod: paymentCodMethod,
+      },
+      paymentInstructions: paymentNotes.trim(),
+    };
+    await updateStartupPaymentDetails(myStartup.id, updatedDetails);
+    setIsSavingPayments(false);
+    toast.success('🎉 Startup payment & payout channels updated successfully!');
+  };
+
 
   if (!isAuthed || !currentUser) {
     return (
@@ -270,6 +320,27 @@ export default function DashboardPage() {
                 <LayoutDashboard className="w-4 h-4 text-[#0F766E]" />
                 <span>Overview</span>
               </button>
+
+              {/* SELLER MODE ONLY: Payment & Payouts */}
+              {userMode === 'seller' && (
+                <button
+                  type="button"
+                  onClick={() => setActiveNav('payments')}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
+                    activeNav === 'payments'
+                      ? 'bg-amber-50 text-amber-900 font-bold'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <CreditCard className="w-4 h-4 text-emerald-600" />
+                    <span>Payment Details</span>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
+                    Live
+                  </span>
+                </button>
+              )}
 
               {/* SELLER MODE ONLY: My Services */}
               {userMode === 'seller' && (
