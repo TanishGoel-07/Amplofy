@@ -24,28 +24,37 @@ import { Button } from '@/components/ui/Button';
 import { CategoryBadge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
 import { useToast } from '@/components/ui/Toast';
+import CreateStartupModal from '@/components/CreateStartupModal';
 import type { ServicePackage } from '@/data/types';
 
 // Curated startup service photo presets
 const SERVICE_PHOTO_PRESETS = [
-  { label: 'Web & App Development', url: 'https://images.pexels.com/photos/546819/pexels-photo-546819.jpeg?auto=compress&cs=tinysrgb&w=800' },
-  { label: 'UI/UX & Product Design', url: 'https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=800' },
-  { label: 'Pitch Deck & Strategy', url: 'https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg?auto=compress&cs=tinysrgb&w=800' },
-  { label: 'Portrait & Studio Photography', url: 'https://images.pexels.com/photos/1983037/pexels-photo-1983037.jpeg?auto=compress&cs=tinysrgb&w=800' },
-  { label: 'Marketing & Campus Growth', url: 'https://images.pexels.com/photos/3182812/pexels-photo-3182812.jpeg?auto=compress&cs=tinysrgb&w=800' },
-  { label: 'STEM & Academic Tutoring', url: 'https://images.pexels.com/photos/3771074/pexels-photo-3771074.jpeg?auto=compress&cs=tinysrgb&w=800' },
+  { label: 'Web & App Development', url: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=compress&cs=tinysrgb&w=800' },
+  { label: 'UI/UX & Product Design', url: 'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?auto=compress&cs=tinysrgb&w=800' },
+  { label: 'Branding & Logo Design', url: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=compress&cs=tinysrgb&w=800' },
+  { label: 'Pitch Deck & Strategy', url: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=compress&cs=tinysrgb&w=800' },
+  { label: 'Photography & Videography', url: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=compress&cs=tinysrgb&w=800' },
+  { label: 'Marketing & Campus Growth', url: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=compress&cs=tinysrgb&w=800' },
+  { label: 'STEM & Academic Tutoring', url: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=compress&cs=tinysrgb&w=800' },
+  { label: 'Music & Audio Production', url: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=compress&cs=tinysrgb&w=800' },
+  { label: 'Writing & Editorial', url: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=compress&cs=tinysrgb&w=800' },
+  { label: 'Hardware & 3D Prototyping', url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=compress&cs=tinysrgb&w=800' },
 ];
 
 const SERVICE_CATEGORIES = [
   'Development',
   'Design',
-  'Photography',
-  'Marketing',
+  'Branding',
   'Pitch Decks',
+  'Photography & Film',
+  'Marketing',
   'Tutoring',
-  'Music',
-  'Labor',
-  'Coaching',
+  'Music & Audio',
+  'Writing & Editorial',
+  'Hardware & 3D',
+  'Event Production',
+  'Campus Logistics',
+  'Legal & Compliance',
   'Other',
 ];
 
@@ -56,6 +65,7 @@ export default function SellPage() {
   const { mode, setMode } = useUserMode();
 
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
   // STEP 1: VENTURE & TITLE
   const [selectedStartupId, setSelectedStartupId] = useState<string>(() => startups[0]?.id || '');
@@ -473,38 +483,87 @@ export default function SellPage() {
 
             {/* Startup Association */}
             <div className="space-y-3">
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                Operating Venture / Studio
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                  Operating Venture / Studio
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsRegisterModalOpen(true)}
+                  className="text-xs font-bold text-[#0F766E] hover:underline flex items-center gap-1"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Register New Startup</span>
+                </button>
+              </div>
+
               {startups.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {startups.map(s => (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Independent Student Option */}
                     <button
-                      key={s.id}
                       type="button"
-                      onClick={() => setSelectedStartupId(s.id)}
+                      onClick={() => setSelectedStartupId('')}
                       className={`p-3.5 rounded-xl border text-left flex items-center gap-3 transition-all ${
-                        selectedStartupId === s.id
+                        selectedStartupId === ''
                           ? 'border-[#0F766E] bg-teal-50/50 shadow-2xs'
                           : 'border-slate-200 hover:border-slate-300'
                       }`}
                     >
-                      <Avatar src={s.logoUrl} name={s.name} size="md" />
+                      <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-xs">
+                        ME
+                      </div>
                       <div>
-                        <div className="text-xs font-bold text-slate-900">{s.name}</div>
-                        <div className="text-[11px] text-slate-500">{s.college}</div>
+                        <div className="text-xs font-bold text-slate-900">Independent Specialist</div>
+                        <div className="text-[11px] text-slate-500">Listed under your personal student profile</div>
                       </div>
                     </button>
-                  ))}
+
+                    {startups.map(s => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => setSelectedStartupId(s.id)}
+                        className={`p-3.5 rounded-xl border text-left flex items-center gap-3 transition-all ${
+                          selectedStartupId === s.id
+                            ? 'border-[#0F766E] bg-teal-50/50 shadow-2xs'
+                            : 'border-slate-200 hover:border-slate-300'
+                        }`}
+                      >
+                        <Avatar src={s.logoUrl} name={s.name} size="md" />
+                        <div className="overflow-hidden">
+                          <div className="text-xs font-bold text-slate-900 truncate">{s.name}</div>
+                          <div className="text-[11px] text-slate-500 truncate">{s.college}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               ) : (
-                <input
-                  type="text"
-                  value={customStartupName}
-                  onChange={e => setCustomStartupName(e.target.value)}
-                  placeholder="e.g. Athena Creative Lab, PixelCraft Studio"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-[#0F766E]"
-                />
+                <div className="p-4 rounded-xl border border-dashed border-teal-300 bg-teal-50/30 space-y-3">
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    You have not registered a campus startup yet. You can register your venture to build client credibility, or list this offering as an independent student specialist.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      onClick={() => setIsRegisterModalOpen(true)}
+                      leftIcon={<Rocket className="w-4 h-4" />}
+                    >
+                      Register Campus Startup
+                    </Button>
+                    <span className="text-xs text-slate-400">or</span>
+                    <input
+                      type="text"
+                      value={customStartupName}
+                      onChange={e => setCustomStartupName(e.target.value)}
+                      placeholder="Type independent studio name..."
+                      className="flex-1 min-w-[200px] px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-[#0F766E] bg-white"
+                    />
+                  </div>
+                </div>
               )}
             </div>
 
@@ -1113,6 +1172,16 @@ export default function SellPage() {
           </div>
         )}
       </div>
+
+      {/* Register Startup Modal */}
+      <CreateStartupModal
+        isOpen={isRegisterModalOpen}
+        onClose={() => setIsRegisterModalOpen(false)}
+        onSuccess={(newStp) => {
+          setSelectedStartupId(newStp.id);
+          setIsRegisterModalOpen(false);
+        }}
+      />
     </div>
   );
 }

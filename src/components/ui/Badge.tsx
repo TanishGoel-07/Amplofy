@@ -22,36 +22,45 @@ export function CategoryBadge({ category, className = '' }: CategoryBadgeProps) 
 
   let colorClasses = 'bg-slate-100 text-slate-700 border-slate-200';
 
-  if (normalized.includes('tutor') || normalized.includes('math') || normalized.includes('science')) {
-    // Tutoring: teal
-    colorClasses = 'bg-teal-50 text-teal-700 border-teal-200';
-  } else if (normalized.includes('photo') || normalized.includes('event')) {
-    // Photography: amber
-    colorClasses = 'bg-amber-50 text-amber-700 border-amber-200';
-  } else if (normalized.includes('dev') || normalized.includes('tech') || normalized.includes('code') || normalized.includes('software')) {
+  if (normalized.includes('dev') || normalized.includes('tech') || normalized.includes('code') || normalized.includes('software')) {
     // Development: indigo
     colorClasses = 'bg-indigo-50 text-indigo-700 border-indigo-200';
-  } else if (normalized.includes('labor') || normalized.includes('move') || normalized.includes('packing') || normalized.includes('handy')) {
-    // Labor: lime
-    colorClasses = 'bg-lime-50 text-lime-800 border-lime-200';
-  } else if (normalized.includes('coach') || normalized.includes('career') || normalized.includes('resume') || normalized.includes('fitness')) {
-    // Coaching: rose
+  } else if (normalized.includes('pitch') || normalized.includes('deck') || normalized.includes('investor')) {
+    // Pitch Decks: amber
+    colorClasses = 'bg-amber-50 text-amber-800 border-amber-200';
+  } else if (normalized.includes('brand') || normalized.includes('logo') || normalized.includes('merch')) {
+    // Branding: pink
+    colorClasses = 'bg-pink-50 text-pink-700 border-pink-200';
+  } else if (normalized.includes('write') || normalized.includes('editorial') || normalized.includes('resume') || normalized.includes('sop')) {
+    // Writing & Editorial: emerald
+    colorClasses = 'bg-emerald-50 text-emerald-800 border-emerald-200';
+  } else if (normalized.includes('hardware') || normalized.includes('3d') || normalized.includes('cad') || normalized.includes('iot') || normalized.includes('robot')) {
+    // Hardware & 3D: cyan
+    colorClasses = 'bg-cyan-50 text-cyan-800 border-cyan-200';
+  } else if (normalized.includes('event') || normalized.includes('hackathon') || normalized.includes('stage')) {
+    // Event Production: yellow
+    colorClasses = 'bg-yellow-50 text-yellow-800 border-yellow-200';
+  } else if (normalized.includes('legal') || normalized.includes('compliance') || normalized.includes('incorporation')) {
+    // Legal & Compliance: purple
+    colorClasses = 'bg-purple-50 text-purple-800 border-purple-200';
+  } else if (normalized.includes('logistic') || normalized.includes('labor') || normalized.includes('move') || normalized.includes('packing')) {
+    // Campus Logistics: stone
+    colorClasses = 'bg-stone-100 text-stone-800 border-stone-200';
+  } else if (normalized.includes('tutor') || normalized.includes('math') || normalized.includes('science') || normalized.includes('stem')) {
+    // Tutoring: teal
+    colorClasses = 'bg-teal-50 text-teal-700 border-teal-200';
+  } else if (normalized.includes('photo') || normalized.includes('film') || normalized.includes('video') || normalized.includes('portrait')) {
+    // Photography & Film: rose
     colorClasses = 'bg-rose-50 text-rose-700 border-rose-200';
-  } else if (normalized.includes('music') || normalized.includes('audio') || normalized.includes('guitar')) {
+  } else if (normalized.includes('music') || normalized.includes('audio') || normalized.includes('sound') || normalized.includes('dj')) {
     // Music: orange
     colorClasses = 'bg-orange-50 text-orange-700 border-orange-200';
-  } else if (normalized.includes('design') || normalized.includes('art') || normalized.includes('ui/ux') || normalized.includes('creative')) {
+  } else if (normalized.includes('design') || normalized.includes('art') || normalized.includes('ui/ux') || normalized.includes('figma')) {
     // Design: violet
     colorClasses = 'bg-violet-50 text-violet-700 border-violet-200';
-  } else if (normalized.includes('market') || normalized.includes('social') || normalized.includes('growth')) {
+  } else if (normalized.includes('market') || normalized.includes('social') || normalized.includes('growth') || normalized.includes('pr')) {
     // Marketing: sky
     colorClasses = 'bg-sky-50 text-sky-700 border-sky-200';
-  } else if (normalized.includes('textbook') || normalized.includes('book')) {
-    colorClasses = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-  } else if (normalized.includes('dorm') || normalized.includes('decor')) {
-    colorClasses = 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200';
-  } else if (normalized.includes('electronic')) {
-    colorClasses = 'bg-cyan-50 text-cyan-700 border-cyan-200';
   }
 
   return (

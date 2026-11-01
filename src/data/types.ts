@@ -5,25 +5,32 @@ export type UserRole = 'buyer' | 'seller' | 'admin';
 export type ListingType = 'product' | 'pre-owned' | 'digital' | 'service';
 
 export type Category =
+  | 'Development'
+  | 'Design'
+  | 'Branding'
+  | 'Pitch Decks'
+  | 'Photography & Film'
+  | 'Photography'
+  | 'Marketing'
+  | 'Tutoring'
+  | 'Music & Audio'
+  | 'Music'
+  | 'Writing & Editorial'
+  | 'Hardware & 3D'
+  | 'Event Production'
+  | 'Campus Logistics'
+  | 'Labor'
+  | 'Coaching'
+  | 'Legal & Compliance'
   | 'Handmade'
   | 'Fashion'
   | 'Books'
-  | 'Textbooks'
   | 'Electronics'
   | 'Art & Crafts'
   | 'Digital Products'
   | 'Stationery'
   | 'Services'
   | 'Pre-Owned'
-  | 'Dorm'
-  | 'Tutoring'
-  | 'Design'
-  | 'Development'
-  | 'Photography'
-  | 'Labor'
-  | 'Coaching'
-  | 'Music'
-  | 'Marketing'
   | 'Other';
 
 export type Condition = 'New' | 'Like New' | 'Good' | 'Fair' | 'Pre-Owned' | 'Digital' | 'N/A';
@@ -463,17 +470,22 @@ export interface CategoryInfo {
   icon: string;
   count: number;
   gradient: string;
+  description?: string;
 }
 
 export const CATEGORIES: CategoryInfo[] = [
-  { name: 'Handmade', icon: 'Sparkles', count: 0, gradient: 'from-brand-400 to-brand-600' },
-  { name: 'Fashion', icon: 'Shirt', count: 0, gradient: 'from-accent-400 to-accent-600' },
-  { name: 'Books', icon: 'BookOpen', count: 0, gradient: 'from-sky-400 to-sky-600' },
-  { name: 'Electronics', icon: 'Smartphone', count: 0, gradient: 'from-slate-400 to-slate-600' },
-  { name: 'Art & Crafts', icon: 'Palette', count: 0, gradient: 'from-rose-400 to-rose-600' },
-  { name: 'Digital Products', icon: 'Monitor', count: 0, gradient: 'from-violet-400 to-violet-600' },
-  { name: 'Stationery', icon: 'Pencil', count: 0, gradient: 'from-amber-400 to-amber-600' },
-  { name: 'Services', icon: 'Briefcase', count: 0, gradient: 'from-emerald-400 to-emerald-600' },
-  { name: 'Pre-Owned', icon: 'Recycle', count: 0, gradient: 'from-teal-400 to-teal-600' },
-  { name: 'Other', icon: 'Package', count: 0, gradient: 'from-indigo-400 to-indigo-600' },
+  { name: 'Development', icon: 'Code', count: 0, gradient: 'from-blue-500 to-indigo-600', description: 'Full-stack web apps, mobile applications, MVPs & AI integrations' },
+  { name: 'Design', icon: 'Palette', count: 0, gradient: 'from-violet-500 to-purple-600', description: 'UI/UX design, Figma prototypes, mobile interfaces & user research' },
+  { name: 'Branding', icon: 'Sparkles', count: 0, gradient: 'from-pink-500 to-rose-600', description: 'Logo design, brand visual identity, typography & club merchandise' },
+  { name: 'Pitch Decks', icon: 'Presentation', count: 0, gradient: 'from-amber-500 to-orange-600', description: 'Investor slide decks, competition decks, grant proposals & financial models' },
+  { name: 'Photography & Film', icon: 'Camera', count: 0, gradient: 'from-cyan-500 to-teal-600', description: 'Graduation portraits, video reels, student film production & event shoots' },
+  { name: 'Marketing', icon: 'TrendingUp', count: 0, gradient: 'from-emerald-500 to-teal-600', description: 'Campus influencer growth, social media management, SEO & launch campaigns' },
+  { name: 'Tutoring', icon: 'GraduationCap', count: 0, gradient: 'from-teal-500 to-emerald-600', description: 'CS, calculus, physics, engineering, data structures & exam prep' },
+  { name: 'Music & Audio', icon: 'Music', count: 0, gradient: 'from-orange-500 to-red-600', description: 'Beat production, podcast audio editing, sound mixing & campus DJing' },
+  { name: 'Writing & Editorial', icon: 'FileText', count: 0, gradient: 'from-teal-600 to-cyan-700', description: 'Resume/CV polish, tech writing, SOPs, academic papers & copy editing' },
+  { name: 'Hardware & 3D', icon: 'Cpu', count: 0, gradient: 'from-indigo-500 to-blue-700', description: 'CAD 3D modeling, 3D printing prototyping, IoT & robotics hardware' },
+  { name: 'Event Production', icon: 'Calendar', count: 0, gradient: 'from-yellow-500 to-amber-600', description: 'Hackathons, collegiate conferences, stage AV & showcase operations' },
+  { name: 'Campus Logistics', icon: 'Truck', count: 0, gradient: 'from-slate-500 to-slate-700', description: 'Dorm move-in/out, peer errands, equipment setup & campus delivery' },
+  { name: 'Legal & Compliance', icon: 'Scale', count: 0, gradient: 'from-purple-600 to-indigo-800', description: 'Student venture formation, founder agreements, NDAs & IP review' },
+  { name: 'Other', icon: 'Box', count: 0, gradient: 'from-slate-600 to-slate-800', description: 'Custom student commissions & interdisciplinary campus services' },
 ];

@@ -1,18 +1,27 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Sparkles, Building2, MapPin, ArrowRight, Handshake } from 'lucide-react';
+import { Search, Sparkles, Building2, MapPin, ArrowRight, Handshake, Rocket, Plus } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import StartupCard from '@/components/StartupCard';
 import { Button } from '@/components/ui/Button';
+import CreateStartupModal from '@/components/CreateStartupModal';
 
 const INDUSTRIES = [
   'All Industries',
   'Development',
   'Design',
-  'Photography',
-  'Labor',
+  'Branding',
+  'Pitch Decks',
+  'Photography & Film',
+  'Marketing',
   'Tutoring',
-  'Music',
+  'Music & Audio',
+  'Writing & Editorial',
+  'Hardware & 3D',
+  'Event Production',
+  'Campus Logistics',
+  'Legal & Compliance',
+  'Other',
 ];
 
 const COLLEGES = [
@@ -31,6 +40,7 @@ export default function StartupDirectoryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndustry, setSelectedIndustry] = useState('All Industries');
   const [selectedCollege, setSelectedCollege] = useState('All Campuses');
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
   const filteredStartups = useMemo(() => {
     let result = [...startups];
@@ -79,21 +89,32 @@ export default function StartupDirectoryPage() {
           Discover high-impact ventures, creative studios, and technical labs built by university founders on campus.
         </p>
 
-        {/* Directory vs Looking For Sub-Navigation Switcher */}
-        <div className="inline-flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200 mt-2">
-          <span className="px-4 py-2 rounded-lg text-xs font-bold bg-white text-slate-900 shadow-xs">
-            Startups Directory ({startups.length})
-          </span>
-          <Link
-            to="/looking-for"
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold text-slate-600 hover:text-purple-700 transition-colors"
-          >
-            <Handshake size={14} className="text-purple-600" />
-            <span>"Looking For" Board</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-purple-100 text-purple-800 font-extrabold">
-              {lookingForRequests.length} Open
+        {/* Directory vs Looking For Sub-Navigation Switcher & Action */}
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <div className="inline-flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200">
+            <span className="px-4 py-2 rounded-lg text-xs font-bold bg-white text-slate-900 shadow-xs">
+              Startups Directory ({startups.length})
             </span>
-          </Link>
+            <Link
+              to="/looking-for"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold text-slate-600 hover:text-purple-700 transition-colors"
+            >
+              <Handshake size={14} className="text-purple-600" />
+              <span>"Looking For" Board</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-purple-100 text-purple-800 font-extrabold">
+                {lookingForRequests.length} Open
+              </span>
+            </Link>
+          </div>
+
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setIsRegisterModalOpen(true)}
+            leftIcon={<Rocket className="w-4 h-4" />}
+          >
+            + Register Startup
+          </Button>
         </div>
       </div>
 
@@ -120,17 +141,19 @@ export default function StartupDirectoryPage() {
       </div>
 
       {/* Featured Ventures Highlight */}
-      <div className="space-y-4">
-        <h2 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-amber-500" />
-          <span>Featured Campus Ventures</span>
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {featured.map(st => (
-            <StartupCard key={st.id} startup={st} />
-          ))}
+      {featured.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-amber-500" />
+            <span>Featured Campus Ventures</span>
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {featured.map(st => (
+              <StartupCard key={st.id} startup={st} />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Search & Filters Bar */}
       <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs space-y-3">
@@ -186,26 +209,55 @@ export default function StartupDirectoryPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 p-8 space-y-3">
-            <Building2 className="w-10 h-10 text-slate-400 mx-auto" />
-            <h3 className="text-base font-bold text-slate-900">No startups found</h3>
-            <p className="text-xs text-slate-500">
-              Try adjusting your industry or campus filters.
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedIndustry('All Industries');
-                setSelectedCollege('All Campuses');
-              }}
-            >
-              Reset Filters
-            </Button>
+          <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 p-8 space-y-4 shadow-2xs">
+            <div className="w-14 h-14 rounded-2xl bg-teal-50 text-[#0F766E] flex items-center justify-center mx-auto border border-teal-100 shadow-xs">
+              <Rocket className="w-7 h-7" />
+            </div>
+            <div className="max-w-md mx-auto space-y-1">
+              <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">
+                {startups.length === 0 ? 'Be the Founding Venture from Your Campus!' : 'No startups found'}
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                {startups.length === 0
+                  ? 'Amplofy connects collegiate software agencies, creative studios, and technical labs with student clients. Register your startup today to showcase your team and services.'
+                  : 'Try adjusting your industry or campus filters to discover more collegiate teams.'}
+              </p>
+            </div>
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+              {startups.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedIndustry('All Industries');
+                    setSelectedCollege('All Campuses');
+                  }}
+                >
+                  Reset Filters
+                </Button>
+              )}
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setIsRegisterModalOpen(true)}
+                leftIcon={<Rocket className="w-4 h-4" />}
+              >
+                Register Campus Startup
+              </Button>
+            </div>
           </div>
         )}
       </div>
+
+      {/* Register Startup Modal */}
+      <CreateStartupModal
+        isOpen={isRegisterModalOpen}
+        onClose={() => setIsRegisterModalOpen(false)}
+        onSuccess={() => {
+          setIsRegisterModalOpen(false);
+        }}
+      />
     </div>
   );
 }

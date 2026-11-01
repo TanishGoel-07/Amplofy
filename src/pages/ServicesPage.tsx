@@ -20,18 +20,35 @@ import ServiceCard from '@/components/ServiceCard';
 import { CardSkeleton } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/Button';
 
-const SERVICE_HERO_CHIPS = ['Tutoring', 'Design', 'Development', 'Moving', 'Music', 'Photography'];
+const SERVICE_HERO_CHIPS = [
+  'Development',
+  'Design',
+  'Branding',
+  'Pitch Decks',
+  'Photography & Film',
+  'Marketing',
+  'Tutoring',
+  'Music & Audio',
+  'Writing & Editorial',
+  'Hardware & 3D',
+];
 
 const CATEGORIES = [
   'All Categories',
-  'Tutoring',
-  'Design',
   'Development',
-  'Photography',
-  'Labor',
-  'Coaching',
-  'Music',
+  'Design',
+  'Branding',
+  'Pitch Decks',
+  'Photography & Film',
   'Marketing',
+  'Tutoring',
+  'Music & Audio',
+  'Writing & Editorial',
+  'Hardware & 3D',
+  'Event Production',
+  'Campus Logistics',
+  'Legal & Compliance',
+  'Other',
 ];
 
 export default function ServicesPage() {
@@ -442,14 +459,25 @@ export default function ServicesPage() {
                 <Briefcase className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900">No services match your filters</h3>
+                <h3 className="text-base font-bold text-slate-900">
+                  {services.length === 0 ? 'No campus services listed yet' : 'No services match your filters'}
+                </h3>
                 <p className="text-xs text-slate-500 mt-1">
-                  Try adjusting your budget or changing the delivery time filter.
+                  {services.length === 0
+                    ? 'Be the first student founder or specialist from your campus to publish service packages!'
+                    : 'Try clearing your filters or selecting a different category.'}
                 </p>
               </div>
-              <Button variant="secondary" size="sm" onClick={resetFilters}>
-                Clear all filters
-              </Button>
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                <Button variant="secondary" size="sm" onClick={resetFilters}>
+                  Clear all filters
+                </Button>
+                <Link to="/sell">
+                  <Button variant="primary" size="sm" leftIcon={<Plus className="w-4 h-4" />}>
+                    Post a Service
+                  </Button>
+                </Link>
+              </div>
             </div>
           )}
 

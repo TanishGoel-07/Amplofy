@@ -36,6 +36,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { CreateLookingForModal } from '@/components/CreateLookingForModal';
+import CreateStartupModal from '@/components/CreateStartupModal';
 import type { Listing } from '@/data/types';
 
 // Area chart datasets for working 7 / 30 / 90 days selector
@@ -90,6 +91,7 @@ export default function DashboardPage() {
   >('overview');
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isRegisterStartupModalOpen, setIsRegisterStartupModalOpen] = useState(false);
 
   // Working Earnings chart range
   const [chartRange, setChartRange] = useState<'7' | '30' | '90'>('7');
@@ -123,9 +125,7 @@ export default function DashboardPage() {
     return listings.filter(
       l =>
         l.type === 'service' &&
-        (l.sellerId === currentUser.id ||
-         l.sellerId === '11111111-1111-4111-a111-111111111111' ||
-         l.sellerId === '33333333-3333-4333-a333-333333333333')
+        (l.sellerId === currentUser.id || !l.sellerId)
     );
   }, [listings, currentUser]);
 
@@ -804,6 +804,65 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
+                  {/* REGISTERED STARTUPS ROW */}
+                  <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-base font-bold text-slate-900">My Campus Ventures</h3>
+                        <p className="text-xs text-slate-500">
+                          Startups, agencies, and studios you manage on campus.
+                        </p>
+                      </div>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => setIsRegisterStartupModalOpen(true)}
+                        leftIcon={<Rocket className="w-4 h-4" />}
+                      >
+                        + Register Startup
+                      </Button>
+                    </div>
+
+                    {startups.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {startups.map(s => (
+                          <div key={s.id} className="p-4 rounded-xl border border-slate-200 hover:border-[#0F766E] transition-all bg-slate-50/50 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 overflow-hidden">
+                              <Avatar src={s.logoUrl} name={s.name} size="md" />
+                              <div className="overflow-hidden">
+                                <div className="text-xs font-bold text-slate-900 truncate">{s.name}</div>
+                                <div className="text-[11px] text-slate-500 truncate">{s.college}</div>
+                              </div>
+                            </div>
+                            <Link to={`/startup/${s.slug || s.id}`}>
+                              <Button variant="outline" size="sm">
+                                View Profile
+                              </Button>
+                            </Link>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-6 rounded-xl border border-dashed border-teal-300 bg-teal-50/30 text-center space-y-2">
+                        <Building2 className="w-8 h-8 text-[#0F766E] mx-auto" />
+                        <h4 className="text-xs font-bold text-slate-900">No Startups Registered Yet</h4>
+                        <p className="text-xs text-slate-500 max-w-md mx-auto">
+                          Register your student venture to unlock multi-service publishing, team profiles, and direct client leads.
+                        </p>
+                        <div className="pt-1">
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => setIsRegisterStartupModalOpen(true)}
+                            leftIcon={<Rocket className="w-4 h-4" />}
+                          >
+                            Register Campus Venture
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   {/* ACTIVE SERVICE OFFERINGS TABLE */}
                   <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1379,6 +1438,12 @@ export default function DashboardPage() {
       <CreateLookingForModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+      />
+
+      {/* Modal for Registering Startup */}
+      <CreateStartupModal
+        isOpen={isRegisterStartupModalOpen}
+        onClose={() => setIsRegisterStartupModalOpen(false)}
       />
     </div>
   );

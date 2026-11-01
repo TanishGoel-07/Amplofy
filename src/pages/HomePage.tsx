@@ -16,7 +16,14 @@ import {
   Handshake,
   Plus,
   LayoutDashboard,
+  Presentation,
+  FileText,
+  Cpu,
+  Calendar,
+  Scale,
+  Rocket,
 } from 'lucide-react';
+import CreateStartupModal from '@/components/CreateStartupModal';
 import { useApp } from '@/context/AppContext';
 import { useUserMode } from '@/hooks/useUserMode';
 import ServiceCard from '@/components/ServiceCard';
@@ -35,25 +42,34 @@ export default function HomePage() {
   const [activeSearchTab, setActiveSearchTab] = useState<'services' | 'startups' | 'looking-for'>('services');
   const [searchQuery, setSearchQuery] = useState('');
   const [respondingRequest, setRespondingRequest] = useState<StartupLookingFor | null>(null);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
   const categories = [
     { name: 'Development', icon: Code, param: 'Development' },
     { name: 'UI/UX Design', icon: Palette, param: 'Design' },
-    { name: 'Photo & Film', icon: Camera, param: 'Photography' },
+    { name: 'Branding & Art', icon: Sparkles, param: 'Branding' },
+    { name: 'Pitch Decks', icon: Presentation, param: 'Pitch Decks' },
+    { name: 'Photo & Film', icon: Camera, param: 'Photography & Film' },
     { name: 'Marketing', icon: TrendingUp, param: 'Marketing' },
-    { name: 'Pitch Decks', icon: Sparkles, param: 'Pitch Decks' },
     { name: 'STEM Tutoring', icon: GraduationCap, param: 'Tutoring' },
-    { name: 'Audio & Events', icon: Music, param: 'Music' },
-    { name: 'Campus Logistics', icon: Truck, param: 'Labor' },
+    { name: 'Music & Audio', icon: Music, param: 'Music & Audio' },
+    { name: 'Writing & Editorial', icon: FileText, param: 'Writing & Editorial' },
+    { name: 'Hardware & 3D', icon: Cpu, param: 'Hardware & 3D' },
+    { name: 'Event Production', icon: Calendar, param: 'Event Production' },
+    { name: 'Campus Logistics', icon: Truck, param: 'Campus Logistics' },
+    { name: 'Legal Guidance', icon: Scale, param: 'Legal & Compliance' },
   ];
 
   const popularChips = [
     { label: 'Web Development', q: 'Development' },
     { label: 'UI/UX Design', q: 'Design' },
-    { label: 'Pitch Deck Design', q: 'Pitch Deck' },
-    { label: 'Portrait Photography', q: 'Photography' },
+    { label: 'Pitch Deck Design', q: 'Pitch Decks' },
+    { label: 'Branding & Logos', q: 'Branding' },
+    { label: 'Portrait Photography', q: 'Photography & Film' },
     { label: 'Social Media Growth', q: 'Marketing' },
-    { label: 'Python & Data Tutoring', q: 'Tutoring' },
+    { label: 'STEM & CS Tutoring', q: 'Tutoring' },
+    { label: 'Music & Audio', q: 'Music & Audio' },
+    { label: 'Hardware Prototyping', q: 'Hardware & 3D' },
   ];
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -247,11 +263,42 @@ export default function HomePage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {featuredStartups.map(startup => (
-            <StartupCard key={startup.id} startup={startup} />
-          ))}
-        </div>
+        {featuredStartups.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {featuredStartups.map(startup => (
+              <StartupCard key={startup.id} startup={startup} />
+            ))}
+          </div>
+        ) : (
+          <div className="bg-gradient-to-r from-teal-900/10 via-indigo-900/10 to-amber-900/10 border border-teal-200/80 rounded-3xl p-8 text-center space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-[#0F766E] text-white flex items-center justify-center mx-auto shadow-md">
+              <Rocket className="w-7 h-7" />
+            </div>
+            <div className="max-w-xl mx-auto space-y-2">
+              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+                Be the Founding Venture from Your University
+              </h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Amplofy is launching across university campuses! Register your student tech startup, creative studio, or research lab to receive client orders and recruit co-founders.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => setIsRegisterModalOpen(true)}
+                leftIcon={<Rocket className="w-4 h-4" />}
+              >
+                Register Campus Startup
+              </Button>
+              <Link to="/startups">
+                <Button variant="secondary" size="md">
+                  Explore Startup Directory
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* 3.5 STARTUP "LOOKING FOR" & COLLABORATIONS */}
@@ -314,11 +361,34 @@ export default function HomePage() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {featuredServices.map(service => (
-                <ServiceCard key={service.id} service={service} />
-              ))}
-            </div>
+            {featuredServices.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {featuredServices.map(service => (
+                  <ServiceCard key={service.id} service={service} />
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center space-y-4 shadow-2xs">
+                <div className="w-12 h-12 rounded-2xl bg-teal-50 text-[#0F766E] flex items-center justify-center mx-auto">
+                  <Briefcase className="w-6 h-6" />
+                </div>
+                <div className="max-w-md mx-auto space-y-1">
+                  <h3 className="text-lg font-bold text-slate-900">
+                    Ready to offer your skills to campus clients?
+                  </h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Post your student-priced packages with fast turnaround and direct WhatsApp/Email client bookings.
+                  </p>
+                </div>
+                <div className="pt-2 flex justify-center gap-3">
+                  <Link to="/sell">
+                    <Button variant="primary" size="md" leftIcon={<Plus className="w-4 h-4" />}>
+                      Post First Service Offering
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right Column: Trending Quick Services (Stacked List Cards) */}
@@ -336,11 +406,23 @@ export default function HomePage() {
               </Link>
             </div>
 
-            <div className="space-y-3">
-              {fastTurnaroundServices.map(service => (
-                <ServiceListCard key={service.id} service={service} />
-              ))}
-            </div>
+            {fastTurnaroundServices.length > 0 ? (
+              <div className="space-y-3">
+                {fastTurnaroundServices.map(service => (
+                  <ServiceListCard key={service.id} service={service} />
+                ))}
+              </div>
+            ) : (
+              <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-3">
+                <Sparkles className="w-8 h-8 text-amber-500 mx-auto" />
+                <p className="text-xs text-slate-600 font-medium">
+                  Quick 24h & 48h turnaround services will appear here as soon as campus founders list them!
+                </p>
+                <Link to="/services">
+                  <Button variant="outline" size="sm">Browse All Categories</Button>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -521,6 +603,15 @@ export default function HomePage() {
         isOpen={!!respondingRequest}
         onClose={() => setRespondingRequest(null)}
         request={respondingRequest}
+      />
+
+      {/* Founder Register Startup Modal */}
+      <CreateStartupModal
+        isOpen={isRegisterModalOpen}
+        onClose={() => setIsRegisterModalOpen(false)}
+        onSuccess={() => {
+          setIsRegisterModalOpen(false);
+        }}
       />
     </div>
   );

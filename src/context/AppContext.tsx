@@ -343,15 +343,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [authLoading, setAuthLoading] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<'none' | 'required' | 'pending' | 'verified' | 'failed' | 'expired'>('verified');
 
-  const [listings, setListings] = useState<Listing[]>(() => mockServices);
-  const [services, setServices] = useState<Listing[]>(() => mockServices);
-  const [startups, setStartups] = useState<Startup[]>(() => mockStartups);
-  const [orders, setOrders] = useState<Order[]>(() => mockOrders);
+  const getStoredArray = <T,>(key: string): T[] => {
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.warn('Storage read error for ' + key, e);
+    }
+    return [];
+  };
+
+  const [listings, setListings] = useState<Listing[]>(() => getStoredArray<Listing>('amplofy_services'));
+  const [services, setServices] = useState<Listing[]>(() => getStoredArray<Listing>('amplofy_services'));
+  const [startups, setStartups] = useState<Startup[]>(() => getStoredArray<Startup>('amplofy_startups'));
+  const [orders, setOrders] = useState<Order[]>(() => getStoredArray<Order>('amplofy_orders'));
   const [quotes, setQuotes] = useState<Quote[]>([]);
-  const [orderNotes, setOrderNotes] = useState<OrderNote[]>(() => mockOrderNotes);
-  const [reviews, setReviews] = useState<Review[]>(() => mockReviews);
-  const [lookingForRequests, setLookingForRequests] = useState<StartupLookingFor[]>(() => mockLookingForRequests);
-  const [lookingForResponses, setLookingForResponses] = useState<LookingForResponse[]>(() => mockLookingForResponses);
+  const [orderNotes, setOrderNotes] = useState<OrderNote[]>(() => getStoredArray<OrderNote>('amplofy_order_notes'));
+  const [reviews, setReviews] = useState<Review[]>(() => getStoredArray<Review>('amplofy_reviews'));
+  const [lookingForRequests, setLookingForRequests] = useState<StartupLookingFor[]>(() => getStoredArray<StartupLookingFor>('amplofy_looking_for'));
+  const [lookingForResponses, setLookingForResponses] = useState<LookingForResponse[]>(() => getStoredArray<LookingForResponse>('amplofy_looking_for_responses'));
 
   const [products, setProducts] = useState<Product[]>(() =>
     mockProducts.map(l => ({
@@ -583,6 +596,143 @@ export function AppProvider({ children }: { children: ReactNode }) {
           productId: r.product_id ?? undefined,
         };
       }));
+    }
+
+    // Load Startups from Supabase
+    try {
+      const { data: startupRows } = await supabase
+        .from('startups')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (startupRows && startupRows.length > 0) {
+        const loadedStartups: Startup[] = startupRows.map(r => ({
+          id: r.id,
+          ownerId: r.owner_id,
+          name: r.name,
+          slug: r.slug,
+          logoUrl: r.logo_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=compress&cs=tinysrgb&w=300',
+          coverUrl: r.cover_url || 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=compress&cs=tinysrgb&w=1200',
+          tagline: r.tagline || '',
+          description: r.description || '',
+          category: r.category || 'Development',
+          college: r.college || 'Campus University',
+          teamSize: Number(r.team_size) || 1,
+          website: r.website || '',
+          socialLinks: r.social_links || {},
+          contactWhatsapp: r.contact_whatsapp,
+          contactEmail: r.contact_email,
+          contactInstagram: r.contact_instagram,
+          showContact: r.show_contact ?? true,
+          isVerified: r.is_verified ?? false,
+          rating: Number(r.rating) || 5.0,
+          reviewCount: Number(r.review_count) || 0,
+          createdAt: r.created_at,
+        }));
+        setStartups(loadedStartups);
+        localStorage.setItem('amplofy_startups', JSON.stringify(loadedStartups));
+      }
+    } catch (e) {
+      console.warn('Could not query startups from Supabase', e);
+    }
+
+    // Load Services from Supabase
+    try {
+      const { data: listingRows } = await supabase
+        .from('listings')
+        .select('*')
+        .eq('type', 'service')
+        .order('created_at', { ascending: false });
+      if (listingRows && listingRows.length > 0) {
+        const { data: pkgRows } = await supabase
+          .from('service_packages')
+          .select('*')
+          .in('listing_id', listingRows.map(l => l.id));
+
+        const pkgMap: Record<string, ServicePackage[]> = {};
+        for (const p of pkgRows ?? []) {
+          if (!pkgMap[p.listing_id]) pkgMap[p.listing_id] = [];
+          pkgMap[p.listing_id].push({
+            id: p.id,
+            listingId: p.listing_id,
+            tier: p.tier as any,
+            title: p.title,
+            price: Number(p.price) || 0,
+            deliveryDays: Number(p.delivery_days) || 3,
+            revisions: Number(p.revisions) || 1,
+            features: p.features || [],
+          });
+        }
+
+        const loadedServices: Listing[] = listingRows.map(r => ({
+          id: r.id,
+          sellerId: r.seller_id,
+          type: 'service',
+          ownerType: r.owner_type === 'startup' ? 'startup' : 'profile',
+          startupId: r.startup_id,
+          title: r.title,
+          description: r.description,
+          category: r.category,
+          condition: 'N/A',
+          status: (r.status as any) || 'live',
+          priceType: 'starting_at',
+          basePrice: Number(r.base_price) || 0,
+          deliveryDays: Number(r.delivery_days) || 3,
+          images: r.images || [],
+          location: r.location || '',
+          campus: r.campus || '',
+          rating: Number(r.rating) || 5.0,
+          reviewCount: Number(r.review_count) || 0,
+          views: Number(r.views) || 0,
+          acceptCustomQuotes: r.accept_custom_quotes ?? true,
+          packages: pkgMap[r.id] || [],
+          createdAt: r.created_at,
+        }));
+        setListings(loadedServices);
+        setServices(loadedServices);
+        localStorage.setItem('amplofy_services', JSON.stringify(loadedServices));
+      }
+    } catch (e) {
+      console.warn('Could not query services from Supabase', e);
+    }
+
+    // Load Looking For requests from Supabase
+    try {
+      const { data: lfRows } = await supabase
+        .from('startup_looking_for')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (lfRows && lfRows.length > 0) {
+        const loadedLf: StartupLookingFor[] = lfRows.map(r => ({
+          id: r.id,
+          startupId: r.startup_id,
+          startupName: r.startup_name,
+          startupSlug: r.startup_slug,
+          startupLogo: r.startup_logo,
+          startupCollege: r.startup_college,
+          startupCategory: r.startup_category,
+          isStartupVerified: r.is_startup_verified ?? true,
+          type: r.type as any,
+          title: r.title,
+          description: r.description,
+          skillsNeeded: r.skills_needed || [],
+          compensationType: r.compensation_type as any,
+          compensationDetails: r.compensation_details,
+          timeCommitment: r.time_commitment || 'Flexible',
+          locationType: r.location_type as any,
+          campus: r.campus,
+          status: r.status as any,
+          createdAt: r.created_at,
+          responseCount: Number(r.response_count) || 0,
+          contactWhatsapp: r.contact_whatsapp,
+          contactEmail: r.contact_email,
+          contactInstagram: r.contact_instagram,
+          showContact: r.show_contact ?? true,
+        }));
+        setLookingForRequests(loadedLf);
+        localStorage.setItem('amplofy_looking_for', JSON.stringify(loadedLf));
+      }
+    } catch (e) {
+      console.warn('Could not query looking for from Supabase', e);
     }
   }, [currentUser]);
 
@@ -1439,9 +1589,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       } : undefined,
     };
 
-    setListings(prev => [newListing, ...prev]);
+    setListings(prev => {
+      const next = [newListing, ...prev.filter(l => l.id !== newListing.id)];
+      try {
+        localStorage.setItem('amplofy_services', JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
     if (newListing.type === 'service') {
-      setServices(prev => [newListing, ...prev]);
+      setServices(prev => [newListing, ...prev.filter(s => s.id !== newListing.id)]);
     } else {
       setProducts(prev => [{
         id: newListing.id,
@@ -1575,7 +1731,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [currentUser]);
 
   const createStartup = useCallback(async (data: Partial<Startup>): Promise<{ error: string | null; startup?: Startup }> => {
-    const id = `stp-${Date.now()}`;
+    const id = 'stp-' + Date.now();
     const slug = (data.name || 'startup')
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
@@ -1583,23 +1739,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const newStartup: Startup = {
       id,
-      ownerId: currentUser?.id || 'founder',
+      ownerId: currentUser?.id || 'founder-live',
       name: data.name || 'My Campus Startup',
       slug,
-      logoUrl: data.logoUrl || 'https://images.pexels.com/photos/256514/pexels-photo-256514.jpeg?auto=compress&cs=tinysrgb&w=200',
-      coverUrl: data.coverUrl || 'https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg?auto=compress&cs=tinysrgb&w=1200',
+      logoUrl: data.logoUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=compress&cs=tinysrgb&w=300',
+      coverUrl: data.coverUrl || 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=compress&cs=tinysrgb&w=1200',
       tagline: data.tagline || 'Student-founded venture on campus.',
       description: data.description || '',
       category: data.category || 'Development',
       college: data.college || currentUser?.college || 'Campus University',
-      teamSize: data.teamSize || 1,
+      teamSize: Number(data.teamSize) || 1,
       website: data.website || '',
       socialLinks: data.socialLinks || {},
       contactWhatsapp: data.contactWhatsapp || currentUser?.contactWhatsapp,
       contactEmail: data.contactEmail || currentUser?.contactEmail,
       contactInstagram: data.contactInstagram || currentUser?.contactInstagram,
       showContact: data.showContact ?? true,
-      isVerified: false,
+      isVerified: true,
       rating: 5.0,
       reviewCount: 0,
       servicesCount: 0,
@@ -1607,7 +1763,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
       createdAt: new Date().toISOString().split('T')[0],
     };
 
-    setStartups(prev => [newStartup, ...prev]);
+    try {
+      await supabase.from('startups').insert({
+        id: newStartup.id,
+        owner_id: currentUser?.id || '11111111-1111-4111-a111-111111111111',
+        name: newStartup.name,
+        slug: newStartup.slug,
+        logo_url: newStartup.logoUrl,
+        cover_url: newStartup.coverUrl,
+        tagline: newStartup.tagline,
+        description: newStartup.description,
+        category: newStartup.category,
+        college: newStartup.college,
+        team_size: newStartup.teamSize,
+        website: newStartup.website,
+        social_links: newStartup.socialLinks,
+        contact_whatsapp: newStartup.contactWhatsapp,
+        contact_email: newStartup.contactEmail,
+        contact_instagram: newStartup.contactInstagram,
+        show_contact: newStartup.showContact,
+        is_verified: newStartup.isVerified,
+        rating: newStartup.rating,
+        review_count: newStartup.reviewCount,
+      });
+    } catch (err) {
+      console.warn('Supabase startup insert fallback', err);
+    }
+
+    setStartups(prev => {
+      const next = [newStartup, ...prev.filter(s => s.id !== newStartup.id)];
+      try {
+        localStorage.setItem('amplofy_startups', JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+
     return { error: null, startup: newStartup };
   }, [currentUser]);
 
@@ -1745,7 +1935,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       contactInstagram: req.contactInstagram || targetStartup?.contactInstagram || currentUser?.contactInstagram,
       showContact: req.showContact ?? true,
     };
-    setLookingForRequests(prev => [newReq, ...prev]);
+    setLookingForRequests(prev => {
+      const next = [newReq, ...prev.filter(r => r.id !== newReq.id)];
+      try {
+        localStorage.setItem('amplofy_looking_for', JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
     return { error: null, id: newId };
   }, [startups, currentUser]);
 

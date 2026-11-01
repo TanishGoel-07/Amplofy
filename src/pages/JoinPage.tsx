@@ -68,12 +68,17 @@ const YEARS = [
 const STARTUP_CATEGORIES = [
   'Development',
   'Design',
-  'Photography',
-  'Labor',
-  'Tutoring',
-  'Music',
+  'Branding',
+  'Pitch Decks',
+  'Photography & Film',
   'Marketing',
-  'Coaching',
+  'Tutoring',
+  'Music & Audio',
+  'Writing & Editorial',
+  'Hardware & 3D',
+  'Event Production',
+  'Campus Logistics',
+  'Legal & Compliance',
   'Other',
 ];
 
