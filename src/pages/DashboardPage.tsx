@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   LayoutDashboard,
   CreditCard,
@@ -92,10 +92,34 @@ export default function DashboardPage() {
     updateStartupPaymentDetails,
   } = useApp();
 
-  // Active navigation view
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+
+  // Auto-login demo founder if visiting payments tab directly
+  useEffect(() => {
+    if (!isAuthed && (searchParams.get('demo') === 'founder' || tabParam === 'payments')) {
+      loginAsDemoFounder();
+    }
+  }, [isAuthed, searchParams, tabParam, loginAsDemoFounder]);
+
+  // Active navigation view (supports URL query ?tab=...)
   const [activeNav, setActiveNav] = useState<
     'overview' | 'listings' | 'orders' | 'community' | 'reviews' | 'team' | 'analytics' | 'looking-for' | 'my-collabs' | 'payments'
-  >('overview');
+  >(() => {
+    if (tabParam && ['overview', 'listings', 'orders', 'community', 'reviews', 'team', 'analytics', 'looking-for', 'my-collabs', 'payments'].includes(tabParam)) {
+      return tabParam as any;
+    }
+    return 'overview';
+  });
+
+  useEffect(() => {
+    if (tabParam && ['overview', 'listings', 'orders', 'community', 'reviews', 'team', 'analytics', 'looking-for', 'my-collabs', 'payments'].includes(tabParam)) {
+      setActiveNav(tabParam as any);
+      if (tabParam === 'payments' || tabParam === 'listings') {
+        setUserMode('seller');
+      }
+    }
+  }, [tabParam, setUserMode]);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isRegisterStartupModalOpen, setIsRegisterStartupModalOpen] = useState(false);
@@ -1095,6 +1119,265 @@ export default function DashboardPage() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* TAB: PAYMENT DETAILS (Founder Configuration & Live Preview) */}
+          {activeNav === 'payments' && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-emerald-50 via-teal-50 to-white p-5 rounded-2xl border border-emerald-200 shadow-2xs">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                      <CreditCard className="w-4 h-4" />
+                    </div>
+                    <h2 className="text-lg font-bold text-slate-900">
+                      Payment Channels & Payout Settings
+                    </h2>
+                  </div>
+                  <p className="text-xs text-slate-600">
+                    Configure direct payment methods for {myStartup?.name || 'your startup'}. Buyers will pay you directly through these channels.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>0% Platform Commission</span>
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* Left 7 cols: Edit Payment Details Form */}
+                <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-6">
+                  <form onSubmit={handleSavePaymentSettings} className="space-y-5">
+                    {/* Section 1: UPI ID */}
+                    <div className="space-y-3">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                        <Smartphone className="w-4 h-4 text-emerald-600" />
+                        <span>UPI & QR Direct Payouts</span>
+                      </h3>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            UPI ID (VPA) *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={paymentUpi}
+                            onChange={e => setPaymentUpi(e.target.value)}
+                            placeholder="e.g. founder@oksbi"
+                            className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            Account Holder / Startup Name *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={paymentHolder}
+                            onChange={e => setPaymentHolder(e.target.value)}
+                            placeholder="e.g. CampusByte Technologies"
+                            className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 2: Bank Account Details */}
+                    <div className="space-y-3 pt-3 border-t border-slate-100">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-blue-600" />
+                        <span>Bank Account / IMPS Details</span>
+                      </h3>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            Bank Name
+                          </label>
+                          <input
+                            type="text"
+                            value={paymentBank}
+                            onChange={e => setPaymentBank(e.target.value)}
+                            placeholder="e.g. HDFC Bank"
+                            className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            Account Number
+                          </label>
+                          <input
+                            type="text"
+                            value={paymentAccNum}
+                            onChange={e => setPaymentAccNum(e.target.value)}
+                            placeholder="e.g. 50100492817291"
+                            className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none font-mono"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            IFSC Code
+                          </label>
+                          <input
+                            type="text"
+                            value={paymentIfsc}
+                            onChange={e => setPaymentIfsc(e.target.value)}
+                            placeholder="e.g. HDFC0001042"
+                            className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none font-mono uppercase"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 3: Accepted Payment Channels */}
+                    <div className="space-y-3 pt-3 border-t border-slate-100">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                        <ShieldCheck className="w-4 h-4 text-purple-600" />
+                        <span>Accepted Channels on Checkout</span>
+                      </h3>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        <label className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={paymentUpiMethod}
+                            onChange={e => setPaymentUpiMethod(e.target.checked)}
+                            className="rounded text-emerald-600 focus:ring-emerald-500"
+                          />
+                          <span className="text-xs font-semibold text-slate-800">UPI Apps</span>
+                        </label>
+
+                        <label className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={paymentQrMethod}
+                            onChange={e => setPaymentQrMethod(e.target.checked)}
+                            className="rounded text-emerald-600 focus:ring-emerald-500"
+                          />
+                          <span className="text-xs font-semibold text-slate-800">Dynamic QR</span>
+                        </label>
+
+                        <label className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={paymentBankMethod}
+                            onChange={e => setPaymentBankMethod(e.target.checked)}
+                            className="rounded text-emerald-600 focus:ring-emerald-500"
+                          />
+                          <span className="text-xs font-semibold text-slate-800">Bank Transfer</span>
+                        </label>
+
+                        <label className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={paymentCardMethod}
+                            onChange={e => setPaymentCardMethod(e.target.checked)}
+                            className="rounded text-emerald-600 focus:ring-emerald-500"
+                          />
+                          <span className="text-xs font-semibold text-slate-800">Cards</span>
+                        </label>
+
+                        <label className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={paymentCodMethod}
+                            onChange={e => setPaymentCodMethod(e.target.checked)}
+                            className="rounded text-emerald-600 focus:ring-emerald-500"
+                          />
+                          <span className="text-xs font-semibold text-slate-800">Pay on Finish</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Section 4: Instructions for Buyers */}
+                    <div className="space-y-2 pt-3 border-t border-slate-100">
+                      <label className="block text-xs font-semibold text-slate-700">
+                        Payment Instructions for Client
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={paymentNotes}
+                        onChange={e => setPaymentNotes(e.target.value)}
+                        placeholder="Mention what buyers should include in payment description or WhatsApp confirmation..."
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none"
+                      />
+                    </div>
+
+                    <div className="pt-2">
+                      <Button
+                        variant="primary"
+                        type="submit"
+                        disabled={isSavingPayments}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                      >
+                        {isSavingPayments ? 'Saving Changes...' : '💾 Save Payment Details'}
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* Right 5 cols: Live Client Checkout Preview */}
+                <div className="lg:col-span-5 space-y-4">
+                  <div className="bg-slate-900 text-white rounded-2xl p-5 shadow-lg space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block">
+                          Client Preview
+                        </span>
+                        <h4 className="text-sm font-bold text-white">How Clients See Your Payout</h4>
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                        Live Preview
+                      </span>
+                    </div>
+
+                    {/* QR Code Card */}
+                    <div className="bg-white text-slate-900 rounded-xl p-4 text-center space-y-3">
+                      <div className="flex items-center justify-center">
+                        <img
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi://pay?pa=${encodeURIComponent(paymentUpi.trim())}&pn=${encodeURIComponent(paymentHolder.trim())}`}
+                          alt="Live UPI QR"
+                          className="w-36 h-36 rounded-lg border border-slate-200 shadow-2xs"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[11px] font-bold text-slate-500 block uppercase">Scan & Pay Directly</span>
+                        <span className="text-xs font-mono font-bold text-[#0F766E]">{paymentUpi || 'founder@oksbi'}</span>
+                      </div>
+                    </div>
+
+                    {/* Payout Channels Summary */}
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between py-1.5 border-b border-slate-800">
+                        <span className="text-slate-400">Account Holder:</span>
+                        <span className="font-semibold text-slate-200">{paymentHolder || myStartup?.name || 'Campus Founder'}</span>
+                      </div>
+                      <div className="flex justify-between py-1.5 border-b border-slate-800">
+                        <span className="text-slate-400">Bank & IFSC:</span>
+                        <span className="font-mono font-semibold text-slate-200">{paymentBank} ({paymentIfsc})</span>
+                      </div>
+                      <div className="flex justify-between py-1.5 border-b border-slate-800">
+                        <span className="text-slate-400">Account No:</span>
+                        <span className="font-mono font-semibold text-slate-200">{paymentAccNum}</span>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700 text-[11px] text-slate-300 leading-relaxed">
+                      💡 <strong>Founder Note to Buyer:</strong> {paymentNotes}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 

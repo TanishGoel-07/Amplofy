@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import {
   Star,
@@ -12,6 +12,7 @@ import {
   Share2,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { mockServices } from '@/data/mockData';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { CategoryBadge } from '@/components/ui/Badge';
@@ -31,7 +32,8 @@ export default function ServiceDetailPage() {
   const { services, listings, reviews, startups } = useApp();
   const { toast } = useToast();
 
-  const allServices = services.length > 0 ? services : listings.filter(l => l.type === 'service');
+  const appServices = services.length > 0 ? services : listings.filter(l => l.type === 'service');
+  const allServices = appServices.length > 0 ? appServices : mockServices;
   const service = allServices.find(s => s.id === serviceId) || allServices[0];
 
   // Selected package tab
@@ -39,7 +41,13 @@ export default function ServiceDetailPage() {
   const [activeImage, setActiveImage] = useState(0);
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [orderModalOpen, setOrderModalOpen] = useState(false);
-  const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
+  const [checkoutModalOpen, setCheckoutModalOpen] = useState(() => searchParams.get('pay') === 'true');
+
+  useEffect(() => {
+    if (searchParams.get('pay') === 'true') {
+      setCheckoutModalOpen(true);
+    }
+  }, [searchParams]);
   const [orderModalMode, setOrderModalMode] = useState<'order' | 'quote'>('order');
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
