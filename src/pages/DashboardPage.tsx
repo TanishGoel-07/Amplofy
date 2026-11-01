@@ -31,6 +31,8 @@ import {
   Compass,
   Briefcase,
   CheckCircle2,
+  Sparkles,
+  Building2,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useUserMode } from '@/hooks/useUserMode';

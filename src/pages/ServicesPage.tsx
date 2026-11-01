@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useSearchParams, Navigate } from 'react-router-dom';
+import { useSearchParams, Navigate, Link } from 'react-router-dom';
 import {
   SlidersHorizontal,
   X,
@@ -8,6 +8,7 @@ import {
   Sparkles,
   Search,
   Briefcase,
+  Plus,
   GraduationCap,
   Palette,
   Code,

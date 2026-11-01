@@ -5,7 +5,7 @@ import type {
   BlockedUser, TransactionStatus, Comment,
   Startup, Listing, Order, Quote, OrderNote, Review, OrderStatus,
   StartupLookingFor, LookingForResponse, AccountType,
-  StartupPaymentDetails,
+  StartupPaymentDetails, ServicePackage,
 } from '@/data/types';
 import {
   mockStudents, mockStartups, mockProducts, mockServices, mockOrders, mockReviews, mockOrderNotes,

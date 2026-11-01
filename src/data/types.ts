@@ -149,6 +149,7 @@ export interface Listing {
   ownerType: 'profile' | 'startup';
   startupId?: string | null;
   startup?: Startup;
+  startupName?: string;
   title: string;
   description: string;
   category: string;
@@ -156,7 +157,9 @@ export interface Listing {
   status: 'draft' | 'live' | 'featured' | 'paused';
   priceType: 'fixed' | 'hourly' | 'starting_at';
   basePrice: number;
+  price?: number;
   deliveryDays?: number;
+  tags?: string[];
   images: string[];
   location: string;
   distance?: string;
@@ -248,6 +251,7 @@ export interface Review {
   id: string;
   orderId?: string;
   listingId?: string;
+  sellerId?: string;
   reviewerId: string;
   reviewerName: string;
   reviewerAvatar: string;

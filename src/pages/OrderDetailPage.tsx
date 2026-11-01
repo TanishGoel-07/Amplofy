@@ -8,6 +8,7 @@ import {
   Paperclip,
   Star,
   FileCheck,
+  FileText,
   ShieldCheck,
   AlertTriangle,
   RotateCcw,

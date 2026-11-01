@@ -14,7 +14,16 @@ export type StatusChipType =
   | 'Completed'
   | 'completed'
   | 'In Progress'
-  | 'in_progress';
+  | 'in_progress'
+  | 'paused'
+  | 'Paused'
+  | 'inquiry'
+  | 'Inquiry'
+  | 'quote_sent'
+  | 'accepted'
+  | 'delivered'
+  | 'reviewed'
+  | (string & {});
 
 export interface StatusChipProps {
   status: StatusChipType;
@@ -39,6 +48,10 @@ export function StatusChip({ status, className = '', dot = true }: StatusChipPro
     styles = 'bg-amber-50 text-amber-800 border-amber-200';
     dotColor = 'bg-amber-500';
     displayLabel = 'Featured';
+  } else if (norm === 'paused') {
+    styles = 'bg-slate-100 text-slate-600 border-slate-300';
+    dotColor = 'bg-slate-400';
+    displayLabel = 'Paused';
   } else if (norm === 'draft') {
     // Draft: slate
     styles = 'bg-slate-100 text-slate-700 border-slate-200';
