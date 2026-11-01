@@ -11,9 +11,9 @@ interface LayoutProps {
 
 export default function Layout({ children, showFooter = true, fullHeight = false }: LayoutProps) {
   return (
-    <div className="min-h-screen flex flex-col bg-ink-50">
+    <div className="min-h-screen flex flex-col bg-ink-50 overflow-x-hidden w-full max-w-full">
       <Navbar />
-      <main className={`flex-1 ${fullHeight ? '' : 'pb-20 lg:pb-0'}`}>{children}</main>
+      <main className={`flex-1 ${fullHeight ? '' : 'pb-20 md:pb-0'}`}>{children}</main>
       {showFooter && <Footer />}
       <BottomNav />
     </div>

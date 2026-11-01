@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   Store,
   Search,
@@ -25,8 +25,9 @@ import { useUserMode } from '@/hooks/useUserMode';
 
 export default function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentUser, isAuthed, signOut } = useApp();
-  const { mode, toggleMode, setMode } = useUserMode();
+  const { mode, toggleMode } = useUserMode();
 
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -46,6 +47,12 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Close mobile menus on location change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+    setMobileSearchOpen(false);
+  }, [location.pathname, location.search]);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -63,71 +70,73 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 w-full">
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 h-16 flex items-center justify-between gap-2 lg:gap-3">
         {/* Left: Brand Logo & Desktop Nav Links */}
-        <div className="flex items-center gap-3 xl:gap-6 shrink-0 min-w-0">
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-[#0F766E] flex items-center justify-center text-white shadow-sm group-hover:bg-[#115E59] transition-colors">
-              <Store className="w-5 h-5" />
+        <div className="flex items-center gap-2 lg:gap-3 xl:gap-5 min-w-0 shrink">
+          <Link to="/" className="flex items-center gap-2 group shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-[#0F766E] flex items-center justify-center text-white shadow-sm group-hover:bg-[#115E59] transition-colors shrink-0">
+              <Store className="w-4 h-4" />
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
-                <span className="font-bold text-lg text-slate-900 tracking-tight leading-none">
+                <span className="font-bold text-base xl:text-lg text-slate-900 tracking-tight leading-none">
                   AMPLOFY
                 </span>
-                <span className={`text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded-md ${
-                  mode === 'seller' ? 'bg-amber-100 text-amber-800' : 'bg-teal-50 text-[#0F766E]'
-                }`}>
+                <span
+                  className={`text-[9px] xl:text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded-md ${
+                    mode === 'seller' ? 'bg-amber-100 text-amber-800' : 'bg-teal-50 text-[#0F766E]'
+                  }`}
+                >
                   {mode === 'seller' ? 'Founder' : 'Marketplace'}
                 </span>
               </div>
-              <span className="text-[10px] font-medium text-slate-400 tracking-wider">
+              <span className="hidden xl:block text-[10px] font-medium text-slate-400 tracking-wider">
                 Campus Startup Services
               </span>
             </div>
           </Link>
 
           {/* Desktop Navigation Items */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 shrink-0">
             {mode === 'buyer' ? (
               // ─── BUYER NAVIGATION LINKS ───
               <>
                 <NavLink
                   to="/services"
                   className={({ isActive }) =>
-                    `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      isActive ? 'bg-teal-50 text-[#0F766E]' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap ${
+                      isActive ? 'bg-teal-50 text-[#0F766E] font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`
                   }
                 >
-                  <Briefcase className="w-4 h-4 text-[#0F766E]" />
-                  <span>Startup Services</span>
+                  <Briefcase className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-[#0F766E] shrink-0" />
+                  <span>Services</span>
                 </NavLink>
 
                 <NavLink
                   to="/startups"
                   className={({ isActive }) =>
-                    `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      isActive ? 'bg-teal-50 text-[#0F766E]' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap ${
+                      isActive ? 'bg-teal-50 text-[#0F766E] font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`
                   }
                 >
-                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <Sparkles className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-amber-500 shrink-0" />
                   <span>Startups</span>
                 </NavLink>
 
                 <NavLink
                   to="/looking-for"
                   className={({ isActive }) =>
-                    `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      isActive ? 'bg-teal-50 text-[#0F766E]' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap ${
+                      isActive ? 'bg-teal-50 text-[#0F766E] font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`
                   }
                 >
-                  <Handshake className="w-4 h-4 text-purple-600" />
+                  <Handshake className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-purple-600 shrink-0" />
                   <span>Looking For</span>
-                  <span className="hidden xl:inline-block px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                  <span className="hidden 2xl:inline-block px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
                     Collabs
                   </span>
                 </NavLink>
@@ -135,12 +144,12 @@ export default function Navbar() {
                 <NavLink
                   to="/community"
                   className={({ isActive }) =>
-                    `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      isActive ? 'bg-teal-50 text-[#0F766E]' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap ${
+                      isActive ? 'bg-teal-50 text-[#0F766E] font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`
                   }
                 >
-                  <Users className="w-4 h-4 text-slate-400" />
+                  <Users className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-slate-400 shrink-0" />
                   <span>Community</span>
                 </NavLink>
               </>
@@ -149,61 +158,62 @@ export default function Navbar() {
               <>
                 <NavLink
                   to="/dashboard"
+                  end
                   className={({ isActive }) =>
-                    `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap ${
                       isActive ? 'bg-amber-50 text-amber-900 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`
                   }
                 >
-                  <LayoutDashboard className="w-4 h-4 text-amber-600" />
+                  <LayoutDashboard className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-amber-600 shrink-0" />
                   <span>Dashboard</span>
                 </NavLink>
 
                 <NavLink
                   to="/dashboard?tab=listings"
                   className={({ isActive }) =>
-                    `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap ${
                       isActive ? 'bg-amber-50 text-amber-900 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`
                   }
                 >
-                  <Briefcase className="w-4 h-4 text-slate-500" />
-                  <span>My Services</span>
+                  <Briefcase className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-slate-500 shrink-0" />
+                  <span>Services</span>
                 </NavLink>
 
                 <NavLink
                   to="/orders"
                   className={({ isActive }) =>
-                    `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap ${
                       isActive ? 'bg-amber-50 text-amber-900 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`
                   }
                 >
-                  <ShoppingBag className="w-4 h-4 text-slate-500" />
-                  <span>Client Orders</span>
+                  <ShoppingBag className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-slate-500 shrink-0" />
+                  <span>Orders</span>
                 </NavLink>
 
                 <NavLink
                   to="/looking-for"
                   className={({ isActive }) =>
-                    `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap ${
                       isActive ? 'bg-amber-50 text-amber-900 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`
                   }
                 >
-                  <Handshake className="w-4 h-4 text-purple-600" />
-                  <span>Looking For Board</span>
+                  <Handshake className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-purple-600 shrink-0" />
+                  <span>Looking For</span>
                 </NavLink>
 
                 <NavLink
                   to="/startups"
                   className={({ isActive }) =>
-                    `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    `flex items-center gap-1.5 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors whitespace-nowrap ${
                       isActive ? 'bg-amber-50 text-amber-900 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`
                   }
                 >
-                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <Sparkles className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-amber-500 shrink-0" />
                   <span>Directory</span>
                 </NavLink>
               </>
@@ -211,8 +221,8 @@ export default function Navbar() {
           </nav>
         </div>
 
-        {/* Center: Search input (desktop) */}
-        <div className="hidden lg:flex items-center w-48 xl:w-72 mx-2 shrink-0">
+        {/* Center: Search input (desktop, xl and up only) */}
+        <div className="hidden xl:flex items-center w-36 2xl:w-56 shrink min-w-0">
           <form onSubmit={handleSearch} className="relative flex items-center w-full">
             <input
               type="text"
@@ -241,12 +251,12 @@ export default function Navbar() {
         </div>
 
         {/* Right: Actions, Log in / Avatar Menu, and Post button */}
-        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-          {/* Mobile search toggle */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Mobile & Tablet search toggle (visible whenever inline search is hidden) */}
           <button
             type="button"
             onClick={() => setMobileSearchOpen(prev => !prev)}
-            className="lg:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 shrink-0"
+            className="xl:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 shrink-0"
             aria-label="Search"
           >
             <Search className="w-4 h-4" />
@@ -258,7 +268,7 @@ export default function Navbar() {
               type="button"
               onClick={toggleMode}
               title="Switch to Startup Founder Mode to sell services"
-              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-slate-700 bg-slate-100 hover:bg-amber-50 hover:text-amber-900 hover:border-amber-300 border border-slate-200 transition-all whitespace-nowrap shrink-0 shadow-2xs cursor-pointer select-none"
+              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-bold text-slate-700 bg-slate-100 hover:bg-amber-50 hover:text-amber-900 hover:border-amber-300 border border-slate-200 transition-all whitespace-nowrap shrink-0 shadow-2xs cursor-pointer select-none"
             >
               <Rocket className="w-3.5 h-3.5 text-amber-600 shrink-0" />
               <span className="whitespace-nowrap">Founder Mode</span>
@@ -269,7 +279,7 @@ export default function Navbar() {
               type="button"
               onClick={toggleMode}
               title="Switch back to Buyer Mode"
-              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-[#0F766E] bg-teal-50 hover:bg-teal-100 hover:border-teal-300 border border-teal-200 transition-all whitespace-nowrap shrink-0 shadow-2xs cursor-pointer select-none"
+              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-bold text-[#0F766E] bg-teal-50 hover:bg-teal-100 hover:border-teal-300 border border-teal-200 transition-all whitespace-nowrap shrink-0 shadow-2xs cursor-pointer select-none"
             >
               <Briefcase className="w-3.5 h-3.5 text-[#0F766E] shrink-0" />
               <span className="whitespace-nowrap">Buyer Mode</span>
@@ -283,8 +293,8 @@ export default function Navbar() {
               <Button
                 variant="primary"
                 size="sm"
-                leftIcon={<Plus className="w-4 h-4 shrink-0" />}
-                className="hidden sm:inline-flex bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold shadow-xs border border-amber-600/30 whitespace-nowrap shrink-0"
+                leftIcon={<Plus className="w-3.5 h-3.5 shrink-0" />}
+                className="hidden sm:inline-flex bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold shadow-xs border border-amber-600/30 whitespace-nowrap shrink-0 px-2.5 py-1 text-xs"
               >
                 + Post Service
               </Button>
@@ -320,9 +330,13 @@ export default function Navbar() {
                     </p>
                     <div className="mt-2 flex items-center justify-between">
                       <span className="text-[11px] font-semibold text-slate-500">Active mode:</span>
-                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                        mode === 'seller' ? 'bg-amber-50 text-amber-900 border-amber-200' : 'bg-teal-50 text-[#0F766E] border-teal-200'
-                      }`}>
+                      <span
+                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                          mode === 'seller'
+                            ? 'bg-amber-50 text-amber-900 border-amber-200'
+                            : 'bg-teal-50 text-[#0F766E] border-teal-200'
+                        }`}
+                      >
                         {mode === 'seller' ? '🚀 Startup Founder' : '🛍️ Buyer / Hire'}
                       </span>
                     </div>
@@ -426,9 +440,11 @@ export default function Navbar() {
                         <Repeat className="w-4 h-4 text-slate-400" />
                         <span>Switch mode</span>
                       </span>
-                      <span className={`text-[11px] font-bold ${
-                        mode === 'buyer' ? 'text-amber-700' : 'text-[#0F766E]'
-                      }`}>
+                      <span
+                        className={`text-[11px] font-bold ${
+                          mode === 'buyer' ? 'text-amber-700' : 'text-[#0F766E]'
+                        }`}
+                      >
                         {mode === 'buyer' ? '→ Founder Mode' : '→ Buyer Mode'}
                       </span>
                     </button>
@@ -448,36 +464,36 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0">
               <Link to="/signin" className="shrink-0">
-                <Button variant="ghost" size="sm" className="whitespace-nowrap">
+                <Button variant="ghost" size="sm" className="whitespace-nowrap px-2.5 py-1 text-xs">
                   Log in
                 </Button>
               </Link>
               <Link to="/join" className="shrink-0">
-                <Button variant="secondary" size="sm" className="whitespace-nowrap">
+                <Button variant="secondary" size="sm" className="whitespace-nowrap px-2.5 py-1 text-xs">
                   Join
                 </Button>
               </Link>
             </div>
           )}
 
-          {/* Mobile hamburger menu button */}
+          {/* Mobile & Tablet hamburger menu button */}
           <button
             type="button"
             onClick={() => setMobileMenuOpen(prev => !prev)}
-            className="md:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100 focus:outline-none"
+            className="lg:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 focus:outline-none shrink-0"
             aria-label="Toggle menu"
           >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
       {/* Mobile Search Bar Expand */}
       {mobileSearchOpen && (
-        <div className="lg:hidden px-4 pb-3 pt-2 border-b border-slate-200 bg-white animate-fade-in shadow-md">
-          <form onSubmit={handleSearch} className="flex items-center gap-2">
+        <div className="xl:hidden px-4 pb-3 pt-2 border-b border-slate-200 bg-white animate-fade-in shadow-md">
+          <form onSubmit={handleSearch} className="flex items-center gap-2 max-w-2xl mx-auto">
             <div className="relative flex-1">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
@@ -495,7 +511,7 @@ export default function Navbar() {
             <button
               type="button"
               onClick={() => setMobileSearchOpen(false)}
-              className="p-1.5 text-slate-400 hover:text-slate-600"
+              className="p-1.5 text-slate-400 hover:text-slate-600 cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -503,13 +519,15 @@ export default function Navbar() {
         </div>
       )}
 
-      {/* Mobile Drawer Menu */}
+      {/* Mobile & Tablet Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-200 bg-white px-4 py-4 space-y-3 animate-fade-in shadow-xl">
+        <div className="lg:hidden border-t border-slate-200 bg-white px-4 py-4 space-y-3 animate-fade-in shadow-xl max-h-[calc(100vh-4rem)] overflow-y-auto">
           {/* Active Mode Banner in Mobile Menu */}
           <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200">
             <div>
-              <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">Current View</span>
+              <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">
+                Current View
+              </span>
               <span className="text-xs font-bold text-slate-900">
                 {mode === 'seller' ? '🚀 Startup Founder Mode' : '🛍️ Campus Buyer Mode'}
               </span>
@@ -519,7 +537,7 @@ export default function Navbar() {
               onClick={() => {
                 toggleMode();
               }}
-              className="px-2.5 py-1 text-xs font-bold rounded-lg bg-white border border-slate-300 text-slate-700 shadow-2xs hover:bg-slate-100"
+              className="px-2.5 py-1 text-xs font-bold rounded-lg bg-white border border-slate-300 text-slate-700 shadow-2xs hover:bg-slate-100 cursor-pointer"
             >
               Switch to {mode === 'buyer' ? 'Founder' : 'Buyer'}
             </button>
