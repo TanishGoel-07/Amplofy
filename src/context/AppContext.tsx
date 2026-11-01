@@ -328,6 +328,8 @@ interface AppState {
     startupData?: Partial<Startup>;
   }) => Promise<{ error: string | null; user?: User }>;
 
+  loginAsDemoFounder: () => void;
+
   // helpers
   getProfileById: (id: string) => Promise<User | null>;
   fetchProfilesByIds: (ids: string[]) => Promise<User[]>;
@@ -912,6 +914,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setAuthLoading(false);
         })();
       } else {
+        try {
+          const savedDemo = localStorage.getItem('amplofy_demo_user');
+          if (savedDemo) {
+            const parsed = JSON.parse(savedDemo);
+            if (parsed && parsed.id) {
+              setCurrentUser(parsed);
+              setIsAuthed(true);
+              setVerificationStatus('verified');
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to parse saved demo user', e);
+        }
         setAuthLoading(false);
       }
     });
@@ -933,6 +948,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
             await loadUserData(u.id);
           }
         } else {
+          try {
+            const savedDemo = localStorage.getItem('amplofy_demo_user');
+            if (savedDemo) {
+              const parsed = JSON.parse(savedDemo);
+              if (parsed && parsed.id) {
+                setCurrentUser(parsed);
+                setIsAuthed(true);
+                setVerificationStatus('verified');
+                setAuthLoading(false);
+                return;
+              }
+            }
+          } catch (e) {}
           setCurrentUser(null);
           setIsAuthed(false);
           setVerificationStatus('none');
@@ -962,6 +990,45 @@ export function AppProvider({ children }: { children: ReactNode }) {
     loadPublicData();
   }, [loadPublicData]);
 
+  const loginAsDemoFounder = useCallback(() => {
+    const demoFounder: User = {
+      id: 'founder-demo-01',
+      name: 'Alex Johnson',
+      username: 'alex_founder',
+      email: 'alex.founder@campus.edu',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=compress&cs=tinysrgb&w=300',
+      bio: 'Campus Founder & Full-Stack Developer. Building high-impact web apps and design systems for campus clients.',
+      location: 'Tech Hub Quad',
+      campus: 'Main Campus',
+      college: 'Stanford University',
+      department: 'Computer Science',
+      year: 'Senior (Year 4)',
+      verified: true,
+      isVerified: true,
+      verificationStatus: 'verified',
+      accountType: 'startup',
+      contactWhatsapp: '+91 98765 43210',
+      contactEmail: 'alex.founder@campus.edu',
+      contactInstagram: 'alex_tech_campus',
+      showContact: true,
+      role: 'seller',
+      followers: 120,
+      following: 45,
+      joinedDate: '2024-01-15',
+      rating: 5.0,
+      reviewCount: 18,
+      listingCount: 3,
+    };
+    setCurrentUser(demoFounder);
+    setIsAuthed(true);
+    setVerificationStatus('verified');
+    try {
+      localStorage.setItem('amplofy_demo_user', JSON.stringify(demoFounder));
+    } catch (e) {
+      console.warn('Failed to save demo user in localStorage', e);
+    }
+  }, []);
+
   // ─── Auth methods ───
   const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -981,6 +1048,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    try {
+      localStorage.removeItem('amplofy_demo_user');
+    } catch (e) {}
     await supabase.auth.signOut();
     setCurrentUser(null);
     setIsAuthed(false);
@@ -1984,7 +2054,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   return (
     <AppContext.Provider value={{
-      isAuthed, authLoading, currentUser,
+      isAuthed, authLoading, currentUser, loginAsDemoFounder,
       signIn, signUp, signOut, resetPassword, deleteAccount, updateProfile,
       verificationStatus, submitVerification,
       products, addProduct, updateProductTransactionStatus, deleteProduct,

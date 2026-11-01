@@ -14,6 +14,7 @@ import {
   Layers,
   ChevronRight,
   MessageSquare,
+  Sparkles,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { StatusChip } from '@/components/ui/Chip';
@@ -23,7 +24,7 @@ import type { Order, OrderStatus } from '@/data/types';
 
 export default function OrdersPage() {
   const navigate = useNavigate();
-  const { orders, currentUser, isAuthed } = useApp();
+  const { orders, currentUser, isAuthed, loginAsDemoFounder } = useApp();
 
   // Tab: 'buyer' | 'seller'
   const [activeTab, setActiveTab] = useState<'buyer' | 'seller'>('buyer');
@@ -32,19 +33,47 @@ export default function OrdersPage() {
 
   if (!isAuthed || !currentUser) {
     return (
-      <div className="max-w-md mx-auto px-4 py-16 text-center space-y-4">
-        <div className="w-12 h-12 rounded-2xl bg-teal-50 text-[#0F766E] flex items-center justify-center mx-auto border border-teal-100">
-          <ShoppingBag className="w-6 h-6" />
+      <div className="min-h-[75vh] flex items-center justify-center py-12 px-4 bg-gradient-to-b from-teal-50/30 via-white to-slate-50">
+        <div className="max-w-lg w-full bg-white rounded-3xl border border-slate-200/90 shadow-xl p-8 sm:p-10 text-center space-y-6">
+          <div className="w-16 h-16 rounded-2xl bg-teal-500/10 border border-teal-500/20 text-[#0F766E] flex items-center justify-center mx-auto shadow-sm">
+            <ShoppingBag className="w-8 h-8" />
+          </div>
+          <div className="space-y-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-teal-50 text-[#0F766E] border border-teal-200">
+              🛍️ Orders &amp; Client Projects
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Sign In to View Orders
+            </h1>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Connect your verified campus account to access project deliverables, milestones, and client communications.
+            </p>
+          </div>
+          <div className="space-y-3 pt-2">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link to="/signin" className="flex-1">
+                <Button variant="primary" size="lg" className="w-full">
+                  Sign In
+                </Button>
+              </Link>
+              <Link to="/join" className="flex-1">
+                <Button variant="secondary" size="lg" className="w-full">
+                  Create Account
+                </Button>
+              </Link>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                loginAsDemoFounder();
+              }}
+              className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-slate-600 hover:text-teal-900 hover:bg-teal-50/80 border border-dashed border-slate-300 hover:border-teal-300 transition-colors flex items-center justify-center gap-2"
+            >
+              <Sparkles className="w-4 h-4 text-teal-600" />
+              <span>Explore as Demo User</span>
+            </button>
+          </div>
         </div>
-        <h2 className="text-xl font-bold text-slate-900">Sign in to view orders</h2>
-        <p className="text-xs text-slate-500">
-          Please log in with your campus account to access your orders, deliverables, and service milestones.
-        </p>
-        <Link to="/signin">
-          <Button variant="primary" size="md" className="w-full">
-            Sign In
-          </Button>
-        </Link>
       </div>
     );
   }

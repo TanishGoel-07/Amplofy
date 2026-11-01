@@ -66,7 +66,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         {/* Left: Brand Logo & Desktop Nav Links */}
-        <div className="flex items-center gap-6 shrink-0">
+        <div className="flex items-center gap-3 xl:gap-6 shrink-0 min-w-0">
           <Link to="/" className="flex items-center gap-2.5 group">
             <div className="w-9 h-9 rounded-xl bg-[#0F766E] flex items-center justify-center text-white shadow-sm group-hover:bg-[#115E59] transition-colors">
               <Store className="w-5 h-5" />
@@ -212,7 +212,7 @@ export default function Navbar() {
         </div>
 
         {/* Center: Search input (desktop) */}
-        <div className="hidden lg:flex flex-1 max-w-md mx-2">
+        <div className="hidden xl:flex flex-1 max-w-sm mx-3 min-w-0">
           <form onSubmit={handleSearch} className="w-full">
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -228,7 +228,7 @@ export default function Navbar() {
         </div>
 
         {/* Right: Actions, Log in / Avatar Menu, and Post button */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {/* Mobile search toggle */}
           <button
             type="button"
@@ -245,32 +245,33 @@ export default function Navbar() {
               type="button"
               onClick={toggleMode}
               title="Switch to Startup Founder Mode to sell services"
-              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-amber-50 hover:text-amber-900 hover:border-amber-300 border border-slate-200 transition-all"
+              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-slate-700 bg-slate-100 hover:bg-amber-50 hover:text-amber-900 hover:border-amber-300 border border-slate-200 transition-all whitespace-nowrap shrink-0 shadow-2xs cursor-pointer select-none"
             >
-              <Rocket className="w-3.5 h-3.5 text-amber-600" />
-              <span>Founder Mode</span>
-              <ArrowRight className="w-3 h-3 text-slate-400" />
+              <Rocket className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+              <span className="whitespace-nowrap">Founder Mode</span>
+              <ArrowRight className="w-3 h-3 text-slate-400 shrink-0" />
             </button>
           ) : (
             <button
               type="button"
               onClick={toggleMode}
               title="Switch back to Buyer Mode"
-              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 transition-all"
+              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-[#0F766E] bg-teal-50 hover:bg-teal-100 hover:border-teal-300 border border-teal-200 transition-all whitespace-nowrap shrink-0 shadow-2xs cursor-pointer select-none"
             >
-              <Briefcase className="w-3.5 h-3.5 text-[#0F766E]" />
-              <span>Switch to Buyer Mode</span>
+              <Briefcase className="w-3.5 h-3.5 text-[#0F766E] shrink-0" />
+              <span className="whitespace-nowrap">Buyer Mode</span>
+              <ArrowRight className="w-3 h-3 text-teal-400 shrink-0" />
             </button>
           )}
 
           {/* "+ Post Service" Button — ONLY VISIBLE IN SELLER/FOUNDER MODE */}
           {mode === 'seller' && (
-            <Link to="/sell">
+            <Link to="/sell" className="shrink-0">
               <Button
                 variant="primary"
                 size="sm"
-                leftIcon={<Plus className="w-4 h-4" />}
-                className="hidden sm:inline-flex bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold shadow-xs border border-amber-600/30"
+                leftIcon={<Plus className="w-4 h-4 shrink-0" />}
+                className="hidden sm:inline-flex bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold shadow-xs border border-amber-600/30 whitespace-nowrap shrink-0"
               >
                 + Post Service
               </Button>
@@ -434,14 +435,14 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            <div className="flex items-center gap-2">
-              <Link to="/signin">
-                <Button variant="ghost" size="sm">
+            <div className="flex items-center gap-2 shrink-0">
+              <Link to="/signin" className="shrink-0">
+                <Button variant="ghost" size="sm" className="whitespace-nowrap">
                   Log in
                 </Button>
               </Link>
-              <Link to="/join">
-                <Button variant="secondary" size="sm">
+              <Link to="/join" className="shrink-0">
+                <Button variant="secondary" size="sm" className="whitespace-nowrap">
                   Join
                 </Button>
               </Link>

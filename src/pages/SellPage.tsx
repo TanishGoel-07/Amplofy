@@ -61,7 +61,7 @@ const SERVICE_CATEGORIES = [
 export default function SellPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { currentUser, isAuthed, startups, addListing } = useApp();
+  const { currentUser, isAuthed, startups, addListing, loginAsDemoFounder } = useApp();
   const { mode, setMode } = useUserMode();
 
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
@@ -147,7 +147,13 @@ export default function SellPage() {
           <Button
             variant="primary"
             size="lg"
-            onClick={() => setMode('seller')}
+            onClick={() => {
+              setMode('seller');
+              if (!currentUser) {
+                loginAsDemoFounder();
+                toast.success('Switched to Founder Mode! Welcome to the Service Creation Wizard.');
+              }
+            }}
             className="w-full sm:w-auto"
           >
             Switch to Founder Mode &amp; Post Service
@@ -168,19 +174,66 @@ export default function SellPage() {
   // Auth Guard
   if (!isAuthed || !currentUser) {
     return (
-      <div className="max-w-md mx-auto px-4 py-16 text-center space-y-4">
-        <div className="w-12 h-12 rounded-2xl bg-teal-50 text-[#0F766E] flex items-center justify-center mx-auto border border-teal-100">
-          <Briefcase className="w-6 h-6" />
+      <div className="min-h-[75vh] flex items-center justify-center py-12 px-4 bg-gradient-to-b from-amber-50/30 via-white to-slate-50">
+        <div className="max-w-lg w-full bg-white rounded-3xl border border-slate-200/90 shadow-xl p-8 sm:p-10 text-center space-y-6">
+          <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center justify-center mx-auto shadow-sm">
+            <Rocket className="w-8 h-8" />
+          </div>
+
+          <div className="space-y-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200">
+              🚀 Startup Founder Launchpad
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Post Your Startup Services
+            </h1>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Publish tiered packages (Basic, Standard, Premium), showcase deliverables, and receive direct inquiries from campus clients over WhatsApp &amp; Email.
+            </p>
+          </div>
+
+          <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 text-left space-y-2.5">
+            <div className="flex items-center gap-2.5 text-xs font-medium text-slate-700">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>3-tier customizable pricing &amp; turnaround times</span>
+            </div>
+            <div className="flex items-center gap-2.5 text-xs font-medium text-slate-700">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Direct WhatsApp &amp; Email inquiries with 0% platform cuts</span>
+            </div>
+            <div className="flex items-center gap-2.5 text-xs font-medium text-slate-700">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Campus verified badge &amp; portfolio showcase</span>
+            </div>
+          </div>
+
+          <div className="space-y-3 pt-2">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link to="/signin" className="flex-1">
+                <Button variant="primary" size="lg" className="w-full">
+                  Sign In
+                </Button>
+              </Link>
+              <Link to="/join?type=startup" className="flex-1">
+                <Button variant="secondary" size="lg" className="w-full">
+                  Join as Startup
+                </Button>
+              </Link>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                loginAsDemoFounder();
+                toast.success('Loaded Founder Mode demo session! You can now test the creation wizard.');
+              }}
+              className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-slate-600 hover:text-amber-900 hover:bg-amber-50/80 border border-dashed border-slate-300 hover:border-amber-300 transition-colors flex items-center justify-center gap-2"
+            >
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              <span>Quick Test: Open Wizard as Demo Founder</span>
+            </button>
+          </div>
         </div>
-        <h2 className="text-xl font-bold text-slate-900">Sign in to list startup services</h2>
-        <p className="text-xs text-slate-500">
-          Connect your verified campus account to publish offerings and start earning.
-        </p>
-        <Link to="/signin">
-          <Button variant="primary" size="md" className="w-full">
-            Sign In
-          </Button>
-        </Link>
       </div>
     );
   }
